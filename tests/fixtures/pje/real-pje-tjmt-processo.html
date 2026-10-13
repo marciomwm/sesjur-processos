@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-fixture="real-anonimizada">
+<!--
+  ESTRUTURA REAL do PJe 1º Grau do TJMT (pje.tjmt.jus.br), página
+  /pje/Processo/ConsultaProcesso/Detalhe/listProcessoCompletoAdvogado.seam
+  capturada em 27/09/2026 e ANONIMIZADA conforme tests/fixtures/LEIA-ME.md.
+
+  Preservados: ids, classes, hierarquia, ordem dos campos e formato dos textos.
+  Substituídos: nomes de pessoas, CPF/CNPJ, número CNJ, comarca e a URL/token
+  de sessão (`ca=`), que jamais deve ser versionada.
+
+  A cronologia traz uma amostra dos itens (a página real carrega 46 de cada vez,
+  em 4 páginas) — suficiente para exercitar separador de data, movimento puro,
+  documento sem movimento e documento com movimento.
+-->
+<head>
+    <meta charset="utf-8">
+    <title>1008695-17.2026.8.11.0006 · Tribunal de Justiça de Mato Grosso - 1º Grau</title>
+    <style>
+        /*
+          Estado real do menu do topo com o dropdown FECHADO: o PJe usa
+          visibility:hidden, não display:none — e é isso que faz innerText
+          devolver string vazia para todo o bloco de detalhes e das partes.
+
+          ATENÇÃO: esta regra é documental. O runner carrega a fixture com
+          DOMParser, cujo documento NÃO é renderizado, então innerText já cai
+          para textContent e o bug não se manifesta aqui. A proteção de
+          regressão de verdade é o caso unitário "dom.texto() sob
+          visibility:hidden" em casos.js, que roda contra o DOM vivo da página.
+        */
+        .mais-detalhes .dropdown-menu { display: table; visibility: hidden; }
+    </style>
+</head>
+<body>
+
+<div class="navbar navbar-default navbar-fixed-top nav-topo ">
+    <div class="container-fluid">
+        <div class="navbar-header hidden-xs">
+            <div id="j_id29" class="navbar-brand"><img class="logo" alt="PJe"></div>
+        </div>
+        <form id="navbar" name="navbar" method="post" class="navbar-collapse">
+            <ul class="nav navbar-nav">
+                <li class="dropdown drop-menu mais-detalhes">
+                    <a class="titulo-topo dropdown-toggle titulo-topo-desktop" title="Mais detalhes" alt="Mais detalhes"
+                       data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">CumSen 1008695-17.2026.8.11.0006
+                        <i class="fa fa-clipboard" title="Copiar número para área de transferência"></i>
+                        <span class="caret pull-right mt-20"></span>
+                        <small>FULANO DE TAL X MUNICÍPIO DE EXEMPLO e outros</small>
+                    </a>
+
+                    <ul class="dropdown-menu">
+                        <li>
+                            <div class="visible-xs-block menu-mobile">
+                                <div class="btn-group btn-group-justified btn-tab-group" role="group">
+                                    <a href="#maisDetalhes" class="btn btn-flat active">Detalhes</a>
+                                    <a href="#poloAtivo" class="btn btn-flat">Polo Ativo</a>
+                                    <a href="#poloPassivo" class="btn btn-flat">Polo Passivo</a>
+                                </div>
+                            </div>
+
+                            <div id="maisDetalhes" class="col-sm-4 col-xs-12 mobile-open scroll-y" style="display:block">
+                                <dl class="dl-horizontal">
+                                    <dt>Classe judicial</dt>
+                                    <dd>CUMPRIMENTO DE SENTENÇA (156)</dd>
+                                    <dt>Assunto</dt>
+                                    <dd>
+                                        <ul>
+                                            <li>Fornecimento de medicamentos (12484)</li>
+                                            <li>Tratamento médico-hospitalar (12490)</li>
+                                        </ul>
+                                    </dd>
+
+                                    <dt>Jurisdição</dt>
+                                    <dd>EXEMPLO</dd>
+                                    <dt>Autuação</dt>
+                                    <dd>14 dez 2023</dd>
+
+                                    <dt>Última distribuição</dt>
+                                    <dd>01 set 2026</dd>
+
+                                    <dt>Valor da causa</dt>
+                                    <dd>R$ 4.141,80</dd>
+
+                                    <dt>Segredo de justiça?</dt>
+                                    <dd>NÃO</dd>
+
+                                    <dt>Justiça gratuita?</dt>
+                                    <dd>NÃO</dd>
+
+                                    <dt>Tutela/liminar?</dt>
+                                    <dd>SIM</dd>
+
+                                    <dt>Prioridade?</dt>
+                                    <dd>NÃO</dd>
+
+                                    <dt>Órgão julgador</dt>
+                                    <dd>2ª VARA DE EXEMPLO</dd>
+                                </dl>
+
+                                <div>
+                                    <dl class="dl-horizontal">
+                                        <dt>Cargo judicial</dt>
+                                        <dd>Juiz Titular</dd>
+                                    </dl>
+                                </div>
+
+                                <div>
+                                    <dl class="dl-horizontal">
+                                        <dt>Competência</dt>
+                                        <dd>Direito à saúde pública - apenas contra Municípios</dd>
+                                    </dl>
+                                </div>
+                            </div>
+
+                            <div id="poloAtivo" class="col-sm-4 col-xs-12 mobile-close scroll-y">
+                                <table class="table">
+                                    <thead>
+                                        <tr><th><span class="icon-auto PA mr-5"></span><span>Polo ativo</span></th></tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>
+                                                <span class=""><span class="">FULANO DE TAL - CPF: 000.000.000-00 (REQUERENTE)</span></span>
+                                                <ul class="tree">
+                                                    <li>
+                                                        <small class="text-muted">
+                                                            <i class="fa fa-users mr-10" title="Defensoria" alt="ícone de grupo"></i>
+                                                            <span title="Defensoria" class="">MT - DEFENSORIA PUBLICA DO ESTADO DE MATO GROSSO</span>
+                                                        </small>
+                                                    </li>
+                                                </ul>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <div id="poloPassivo" class="col-sm-4 col-xs-12 mobile-close scroll-y">
+                                <table class="table">
+                                    <thead>
+                                        <tr><th><span class="icon-auto PP mr-5"></span><span>Polo passivo</span></th></tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>
+                                                <span class=""><span class="">MUNICÍPIO DE EXEMPLO - CNPJ: 00.000.000/0001-00 (REQUERIDO)</span></span>
+                                                <ul class="tree">
+                                                    <li>
+                                                        <small class="text-muted">
+                                                            <i class="fa fa-users mr-10" title="Procuradoria" alt="ícone de grupo"></i>
+                                                            <span title="Procuradoria" class="">PROCURADORIA-GERAL DO MUNICÍPIO DE EXEMPLO</span>
+                                                        </small>
+                                                    </li>
+                                                </ul>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>
+                                                <span class=""><span class="">ESTADO DE MATO GROSSO - CNPJ: 11.111.111/0001-11 (REQUERIDO)</span></span>
+                                                <ul class="tree">
+                                                    <li>
+                                                        <small class="text-muted">
+                                                            <i class="fa fa-users mr-10" title="Procuradoria" alt="ícone de grupo"></i>
+                                                            <span title="Procuradoria" class="">PROCURADORIA GERAL DO ESTADO DE MATO GROSSO</span>
+                                                        </small>
+                                                    </li>
+                                                </ul>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </li>
+                    </ul>
+                </li>
+            </ul>
+        </form>
+    </div>
+</div>
+
+<div id="divTimeLine:divEventosTimeLine" class="eventos-timeline scroll-y">
+    <input type="hidden" id="totalPaginas" value="4">
+    <input type="hidden" id="paginaAtual" value="1">
+
+    <div id="divTimeLine:eventosTimeLineElement">
+        <div class="media data div-data-rolagem "></div>
+
+        <div class="media data">
+            <div class="media-body">
+                <span class="text-muted data-interna">18 set 2026</span>
+            </div>
+        </div>
+
+        <div class="media interno tipo-M">
+            <div class="media-left ">
+                <span class="icon-auto sistema tip-right" title="" alt="Movimento processual lançado"></span>
+            </div>
+            <div class="media-body box ">
+                <div id="divTimeLine:j_id424:0:j_id426:0:j_id428">
+                    <i class="fa fa-bullhorn mr-10  tip" aria-hidden="true" title="" alt="Movimento processual lançado"></i>
+                    <span class="text-upper texto-movimento">Expedida/certificada a intimação eletrônica</span>
+                </div>
+                <div class="anexos"></div>
+                <div class="col-sm-12">
+                    <small class="text-muted pull-right">15:14</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="media interno tipo-D">
+            <div class="media-left ">
+                <span class="icon-auto I tip-right" title="" alt="Interno"></span>
+            </div>
+            <div class="media-body box ">
+                <div class="anexos">
+                    <a href="#" id="divTimeLine:j_id424:0:j_id426:4:j_id437" name="divTimeLine:j_id424:0:j_id426:4:j_id437">
+                        <i class="fa fa-file-text-o mr-10 tip" aria-hidden="true" title="" alt="Documento juntado"></i>
+                        <span class="" title="">249562011 - Sentença</span>
+                    </a>
+                    <i class="fa fa-clipboard copiar-clipboard" title="Copiar número para área de transferência"></i>
+                    <div class="btn-group btn-group-sm pull-right" role="group">
+                        <a href="#" class="btn btn-flat btn-sm" title="Adicionar lembretes"><i class="fa fa-thumb-tack"></i></a>
+                    </div>
+                </div>
+                <div class="col-sm-12">
+                    <small class="text-muted pull-right">15:00</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="media interno tipo-D">
+            <div class="media-left ">
+                <span class="icon-auto I tip-right" title="" alt="Interno"></span>
+            </div>
+            <div class="media-body box ">
+                <div>
+                    <i class="fa fa-bullhorn mr-10  tip" aria-hidden="true" title="" alt="Movimento processual lançado"></i>
+                    <span class="text-upper texto-movimento">Extinto os autos em razão de perda de objeto</span>
+                </div>
+                <div class="anexos">
+                    <a href="#" id="divTimeLine:j_id424:0:j_id426:5:j_id437" name="divTimeLine:j_id424:0:j_id426:5:j_id437">
+                        <i class="fa fa-file-text-o mr-10 tip" aria-hidden="true" title="" alt="Documento juntado"></i>
+                        <span class="" title="">249558289 - Sentença</span>
+                    </a>
+                    <i class="fa fa-clipboard copiar-clipboard" title="Copiar número para área de transferência"></i>
+                    <div class="btn-group btn-group-sm pull-right" role="group">
+                        <a href="#" class="btn btn-flat btn-sm" title="Adicionar lembretes"><i class="fa fa-thumb-tack"></i></a>
+                    </div>
+                </div>
+                <div class="col-sm-12">
+                    <small class="text-muted pull-right">15:00</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="media data">
+            <div class="media-body">
+                <span class="text-muted data-interna">01 set 2026</span>
+            </div>
+        </div>
+
+        <div class="media interno tipo-M">
+            <div class="media-left ">
+                <span class="icon-auto E tip-right" title="" alt="Externo"></span>
+            </div>
+            <div class="media-body box ">
+                <div id="divTimeLine:j_id424:1:j_id426:0:j_id428">
+                    <i class="fa fa-bullhorn mr-10  tip" aria-hidden="true" title="" alt="Movimento processual lançado"></i>
+                    <span class="text-upper texto-movimento">Juntada de certidão</span>
+                </div>
+                <div class="anexos"></div>
+                <div class="col-sm-12">
+                    <small class="text-muted pull-right">12:43</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="detalheDocumento" class="col-xs-12 no-scroll detalhe-documento box timeline-open mobile-close">
+    <div id="detalheDocumento:j_id487" class="titulo-documento col-md-12 mt-5 mb-10">
+        <h3 class="media-heading">
+            <a id="detalheDocumento:j_id489" name="detalheDocumento:j_id489" title="Abrir documento em outra página">
+                <span class="" title="249562011 - Sentença">249562011 - Sentença</span>
+            </a>
+        </h3>
+        <div>Juntado por BELTRANO DE TAL em 18/09/2026 15:00:16</div>
+    </div>
+    <iframe id="frameHtml"></iframe>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,20 @@
+# Raiz do projeto. Redireciona o acesso a /gestao-juridica/ para a pasta public/.
+Options -Indexes
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /gestao-juridica/
+    # Acesso a raiz do projeto -> public/
+    RewriteRule ^$ public/ [L,R=302]
+</IfModule>
+
+# Bloqueia o acesso a arquivos sensiveis em qualquer subpasta.
+<FilesMatch "(^\.|\.(sql|md|log|bak|ini)$)">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order deny,allow
+        Deny from all
+    </IfModule>
+</FilesMatch>

@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-fixture="real-anonimizada">
+<!--
+  PJe do TJMT em estado DEGRADADO: o número do processo e a cronologia estão
+  presentes, mas o bloco "Mais detalhes" do topo (#maisDetalhes, #poloAtivo,
+  #poloPassivo) NÃO está no DOM.
+
+  Observado em 27/09/2026 numa extração real: a página trazia 124 movimentações
+  e nenhum dos dados cadastrais. Reproduzido removendo o dropdown da página ao
+  vivo — o sintoma bate exatamente (classe, assunto, jurisdição, datas, valor e
+  partes falham; a timeline continua sendo lida).
+
+  Esta fixture existe para garantir que o extrator relate UMA causa acionável em
+  vez de dez "campo não encontrado", que não dizem ao usuário o que fazer.
+-->
+<head>
+    <meta charset="utf-8">
+    <title>1008695-17.2026.8.11.0006 · Tribunal de Justiça de Mato Grosso - 1º Grau</title>
+</head>
+<body>
+
+<div class="navbar navbar-default navbar-fixed-top nav-topo ">
+    <div class="container-fluid">
+        <form id="navbar" name="navbar" method="post" class="navbar-collapse">
+            <ul class="nav navbar-nav">
+                <li class="dropdown drop-menu mais-detalhes">
+                    <a class="titulo-topo dropdown-toggle titulo-topo-desktop" title="Mais detalhes" alt="Mais detalhes"
+                       data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">CumSen 1008695-17.2026.8.11.0006
+                        <i class="fa fa-clipboard" title="Copiar número para área de transferência"></i>
+                        <span class="caret pull-right mt-20"></span>
+                        <small>FULANO DE TAL X MUNICÍPIO DE EXEMPLO e outros</small>
+                    </a>
+                    <!-- O <ul class="dropdown-menu"> com #maisDetalhes / #poloAtivo /
+                         #poloPassivo não está presente nesta renderização. -->
+                </li>
+            </ul>
+        </form>
+    </div>
+</div>
+
+<div id="divTimeLine:divEventosTimeLine" class="eventos-timeline scroll-y">
+    <input type="hidden" id="totalPaginas" value="1">
+    <input type="hidden" id="paginaAtual" value="1">
+
+    <div id="divTimeLine:eventosTimeLineElement">
+        <div class="media data">
+            <div class="media-body">
+                <span class="text-muted data-interna">18 set 2026</span>
+            </div>
+        </div>
+
+        <div class="media interno tipo-M">
+            <div class="media-left ">
+                <span class="icon-auto sistema tip-right" title="" alt="Movimento processual lançado"></span>
+            </div>
+            <div class="media-body box ">
+                <div>
+                    <i class="fa fa-bullhorn mr-10  tip" aria-hidden="true" title="" alt="Movimento processual lançado"></i>
+                    <span class="text-upper texto-movimento">Expedida/certificada a intimação eletrônica</span>
+                </div>
+                <div class="anexos"></div>
+                <div class="col-sm-12">
+                    <small class="text-muted pull-right">15:14</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="media interno tipo-D">
+            <div class="media-left ">
+                <span class="icon-auto I tip-right" title="" alt="Interno"></span>
+            </div>
+            <div class="media-body box ">
+                <div class="anexos">
+                    <a href="#" id="divTimeLine:j_id424:0:j_id426:4:j_id437">
+                        <i class="fa fa-file-text-o mr-10 tip" aria-hidden="true" title="" alt="Documento juntado"></i>
+                        <span class="" title="">249562011 - Sentença</span>
+                    </a>
+                    <div class="btn-group btn-group-sm pull-right" role="group">
+                        <a href="#" class="btn btn-flat btn-sm" title="Adicionar lembretes"><i class="fa fa-thumb-tack"></i></a>
+                    </div>
+                </div>
+                <div class="col-sm-12">
+                    <small class="text-muted pull-right">15:00</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

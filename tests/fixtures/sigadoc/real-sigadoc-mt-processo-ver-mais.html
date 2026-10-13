@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-fixture="real-anonimizada">
+<!--
+  FIXTURE REAL ANONIMIZADA — SIGA-DOC v11.2.0 (www.sigadoc.mt.gov.br)
+  Página: /sigaex/app/expediente/doc/exibirAntigo [SIGLA] — link "Ver Mais".
+  Capturada em 21/09/2026.
+
+  ESTRUTURA fiel ao DOM real: table.mov com cabeçalho em duas linhas
+  (Cadastrante/Atendente × Lotação/Pessoa), data apenas na 1ª linha de cada
+  grupo (as seguintes herdam), coluna "Duração" com rowspan, eventos
+  Sobrestar/Dessobrestar SEM classe na <tr>, e uma tabela final "Geral"
+  (assinaturas/vínculos) que o extrator deve ignorar.
+
+  DADOS: subconjunto das 63 movimentações reais; servidores → SERVIDOR NN /
+  SES0000NN; paciente → FULANO DE TAL.
+-->
+<head><meta charset="utf-8"><title>SIGA - Documento</title></head>
+<body>
+<div id="divBody"><div id="page" class="container-fluid content">
+<h2>SES-PRO-2026/23509</h2>
+
+<h3>1º Volume - Aguardando Andamento [<span title="SERVIDOR 01">SES000001</span>], Aguardando Andamento [UNIJUR, [<span title="SERVIDOR 01">SES000001</span>]]</h3>
+<table class="table table-sm table-hover table-striped mov mt-2">
+  <thead class="thead-light align-middle text-center">
+    <tr><th class="text-center" rowspan="2">Data</th><th rowspan="2">Evento</th><th colspan="2">Cadastrante</th><th colspan="2">Atendente</th><th rowspan="2">Descrição</th><th class="text-center" rowspan="2">Duração</th></tr>
+    <tr><th class="text-left">Lotação</th><th class="text-left">Pessoa</th><th class="text-left">Lotação</th><th class="text-left">Pessoa</th></tr>
+  </thead>
+  <tbody>
+    <tr class="recebimento"><td class="text-center">18/09/26</td><td>Recebimento</td><td class="text-left"><a><span title="UNIDADE JURIDICA">SESUNIJUR</span></a></td><td class="text-left"><a><span title="SERVIDOR 01 - SES000001">Servidor01</span></a></td><td class="text-left"><a><span title="UNIDADE JURIDICA">SESUNIJUR</span></a></td><td class="text-left"><a><span title="SERVIDOR 01 - SES000001">Servidor01</span></a></td><td></td><td class="duracaoborderbottom text-center bg-white" rowspan="4">21 dias</td></tr>
+    <tr class="transferencia"><td class="text-center">28/08/26</td><td>Transferência</td><td class="text-left"><a><span title="COORDENADORIA DE FARMACIA DE DEMANDA EXTRAORDINARIA">SESCOFDE</span></a></td><td class="text-left"><a><span title="SERVIDOR 10 - SES000010">Servidor10</span></a></td><td class="text-left"><a><span title="UNIDADE JURIDICA">SESUNIJUR</span></a></td><td class="text-left"><a><span title="SERVIDOR 11 - SES000011">Servidor11</span></a></td><td><button id="protocolo" class="link-tag" title="">Protocolo</button></td></tr>
+    <tr class="juntada"><td class="text-center"></td><td>Juntada</td><td class="text-left"><a><span title="COORDENADORIA DE FARMACIA DE DEMANDA EXTRAORDINARIA">SESCOFDE</span></a></td><td class="text-left"><a><span title="SERVIDOR 02 - SES000002">Servidor02</span></a></td><td class="text-left"><a><span title="COORDENADORIA DE FARMACIA DE DEMANDA EXTRAORDINARIA">SESCOFDE</span></a></td><td class="text-left"><a><span title="SERVIDOR 10 - SES000010">Servidor10</span></a></td><td><a id="ses-cin-2026-161332-a" class="link-tag" title="" href="#">SES-CIN-2026/161332-A</a><span class="gt-separator">|</span><button id="disponibilizar-no-acompanhamento-do-protocolo" class="link-tag" title="">Disponibilizar no Acompanhamento do Protocolo</button></td></tr>
+    <tr class="anotacao"><td class="text-center"></td><td>Anotação</td><td class="text-left"><a><span title="SUPERINTENDENCIA DE ASSISTENCIA FARMACEUTICA">SESSAF</span></a></td><td class="text-left"><a><span title="SERVIDOR 03 - SES000003">Servidor03</span></a></td><td class="text-left"><a><span title="SUPERINTENDENCIA DE ASSISTENCIA FARMACEUTICA">SESSAF</span></a></td><td class="text-left"><a><span title="SERVIDOR 03 - SES000003">Servidor03</span></a></td><td> FOI REALIZADA A BAIXA NA PLANILHA DE AQUISIÇÃO <a id="excluir" class="btn btn-sm btn-light text-secondary link-tag link-tag-hidden d-none" title="" href="#">Excluir</a></td></tr>
+    <tr class="transferencia"><td class="text-center">27/08/26</td><td>Transferência</td><td class="text-left"><a><span title="COORDENADORIA DE FARMACIA DE DEMANDA EXTRAORDINARIA">SESCOFDE</span></a></td><td class="text-left"><a><span title="SERVIDOR 04 - SES000004">Servidor04</span></a></td><td class="text-left"><a><span title="SUPERINTENDENCIA DE ASSISTENCIA FARMACEUTICA">SESSAF</span></a></td><td class="text-left"><a><span title="SERVIDOR 03 - SES000003">Servidor03</span></a></td><td><button id="protocolo" class="link-tag" title="">Protocolo</button></td><td class="duracaoborderbottom text-center bg-white" rowspan="4">1 dia</td></tr>
+    <tr class="apensacao"><td class="text-center"></td><td>Apensação</td><td class="text-left"><a><span title="COORDENADORIA DE FARMACIA DE DEMANDA EXTRAORDINARIA">SESCOFDE</span></a></td><td class="text-left"><a><span title="SERVIDOR 04 - SES000004">Servidor04</span></a></td><td class="text-left"><a><span title="COORDENADORIA DE FARMACIA DE DEMANDA EXTRAORDINARIA">SESCOFDE</span></a></td><td class="text-left"><a><span title="SERVIDOR 02 - SES000002">Servidor02</span></a></td><td>Documento apensado: <a href="#">SES-PRO-2024/96182-V01</a></td></tr>
+    <tr class=""><td class="text-center"></td><td>Dessobrestar</td><td class="text-left"><a><span title="COORDENADORIA DE FARMACIA DE DEMANDA EXTRAORDINARIA">SESCOFDE</span></a></td><td class="text-left"><a><span title="SERVIDOR 04 - SES000004">Servidor04</span></a></td><td class="text-left"><a><span title="COORDENADORIA DE FARMACIA DE DEMANDA EXTRAORDINARIA">SESCOFDE</span></a></td><td class="text-left"><a><span title="SERVIDOR 02 - SES000002">Servidor02</span></a></td><td></td></tr>
+    <tr class=""><td class="text-center">07/05/26</td><td>Sobrestar</td><td class="text-left"><a><span title="COORDENADORIA DE FARMACIA DE DEMANDA EXTRAORDINARIA">SESCOFDE</span></a></td><td class="text-left"><a><span title="SERVIDOR 02 - SES000002">Servidor02</span></a></td><td class="text-left"><a><span title="COORDENADORIA DE FARMACIA DE DEMANDA EXTRAORDINARIA">SESCOFDE</span></a></td><td class="text-left"><a><span title="SERVIDOR 02 - SES000002">Servidor02</span></a></td><td></td><td class="duracaoborderbottom text-center bg-white" rowspan="3">3 meses</td></tr>
+    <tr class="desentranhamento"><td class="text-center"></td><td>Desentranhamento</td><td class="text-left"><a><span title="SUPERINTENDENCIA DE ASSISTENCIA FARMACEUTICA">SESSAF</span></a></td><td class="text-left"><a><span title="SERVIDOR 03 - SES000003">Servidor03</span></a></td><td class="text-left"><a><span title="SUPERINTENDENCIA DE ASSISTENCIA FARMACEUTICA">SESSAF</span></a></td><td class="text-left"><a><span title="SERVIDOR 03 - SES000003">Servidor03</span></a></td><td><span class="gt-separator">|</span> Documento desentranhado: <a href="#">SES-CAP-2026/215411-A</a> Descrição: HÓRUS - ATUALIZAÇÃO DE RECEITA</td></tr>
+    <tr class="criacao"><td class="text-center">07/04/26</td><td>Criação</td><td class="text-left"><a><span title="UNIDADE JURIDICA">SESUNIJUR</span></a></td><td class="text-left"><a><span title="SERVIDOR 09 - SES000009">Servidor09</span></a></td><td class="text-left"><a><span title="UNIDADE JURIDICA">SESUNIJUR</span></a></td><td class="text-left"><a><span title="SERVIDOR 09 - SES000009">Servidor09</span></a></td><td></td></tr>
+  </tbody>
+</table>
+
+<h3>Geral</h3>
+<table class="table table-sm table-hover table-striped mov mt-2">
+  <thead class="thead-light align-middle text-center">
+    <tr><th class="text-center" rowspan="2">Data</th><th rowspan="2">Evento</th><th colspan="2">Cadastrante</th><th colspan="2">Atendente</th><th rowspan="2">Descrição</th><th class="text-center" rowspan="2">Duração</th></tr>
+    <tr><th class="text-left">Lotação</th><th class="text-left">Pessoa</th><th class="text-left">Lotação</th><th class="text-left">Pessoa</th></tr>
+  </thead>
+  <tbody>
+    <tr class=""><td class="text-center">07/04/26</td><td>Assinatura com senha</td><td class="text-left"><a><span title="UNIDADE JURIDICA">SESUNIJUR</span></a></td><td class="text-left"><a><span title="SERVIDOR 09 - SES000009">Servidor09</span></a></td><td class="text-left"><a><span title="UNIDADE JURIDICA">SESUNIJUR</span></a></td><td class="text-left"><a><span title="SERVIDOR 09 - SES000009">Servidor09</span></a></td><td>SERVIDOR 09:SES000009</td><td></td></tr>
+  </tbody>
+</table>
+
+<div id="collapseOutrosMob" class="card-body collapse show m-0 p-0"><div class="table-responsive">
+  <table class="table table-sm mb-0 w-100"><tbody>
+    <tr><td><i><b>V01</b></i></td><td>Aguardando Andamento</td><td><a><span title="SERVIDOR 01 - SES000001">Servidor01</span></a></td><td><a><span title="UNIDADE JURIDICA">UNIJUR</span></a></td><td></td><td></td><td></td></tr>
+  </tbody></table>
+</div></div>
+</div></div>
+</body>
+</html>

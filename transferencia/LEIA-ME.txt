@@ -1,0 +1,39 @@
+SESJUR - Transferência para outro computador com Laragon
+=========================================================
+
+NO COMPUTADOR DE ORIGEM
+  1. Inicie o Laragon ("Iniciar Tudo").
+  2. Execute C:\laragon\www\gestao-juridica\transferencia\exportar.bat
+  3. Na Área de Trabalho surgem a pasta e o arquivo
+       SESJUR-transferencia-AAAAMMDD_HHMMSS(.zip)
+     com os arquivos do sistema, o banco com os dados e o instalador.
+
+NO COMPUTADOR NOVO
+  Requisitos: Laragon com PHP 8.1 ou mais novo (extensões pdo_mysql e
+  mbstring) e MySQL 8.0.16+ ou MariaDB 10.2+, servidor web Apache.
+  1. Inicie o Laragon ("Iniciar Tudo").
+  2. Extraia o .zip numa pasta qualquer (ex.: Documentos).
+  3. Execute instalar.bat de dentro da pasta extraída.
+     - Se já houver um banco gestao_juridica, ele é salvo em backup e o
+       instalador pede confirmação antes de substituí-lo.
+     - Se já houver C:\laragon\www\gestao-juridica, ela é renomeada para
+       gestao-juridica_anterior_AAAAMMDD_HHMMSS (nada é apagado).
+  4. Acesse http://localhost/gestao-juridica/public/ e entre com os mesmos
+     usuários e senhas do computador de origem. Use Ctrl+F5 no primeiro acesso.
+  5. Extensão do Chrome: chrome://extensions > Modo do desenvolvedor >
+     Carregar sem compactação > pasta C:\laragon\www\gestao-juridica\chrome-extension
+     e autorize de novo os domínios do SIGADOC e do PJe nas opções dela.
+
+SITUAÇÕES ESPECIAIS
+  - Laragon em outra pasta: antes de executar, num prompt,
+        set LARAGON=D:\laragon
+  - Usuário root do MySQL com senha:
+        set MYSQL_PWD=sua_senha
+    e ajuste a senha em app\config\config.php.
+  - A extensão do Chrome só conversa com o sistema em http://localhost ou
+    http://127.0.0.1. Acessando por IP ou nome da máquina, a extração não
+    funciona sem ajustes.
+
+SEGURANÇA
+  O pacote contém dados pessoais e de processos e o arquivo de configuração.
+  Transporte por meio seguro e apague o .zip e a pasta depois de instalar.

@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-fixture="real-anonimizada">
+<!--
+  ESTRUTURA REAL do PJe 1º Grau do TJMT (pje.tjmt.jus.br), página
+  /pje/Processo/ConsultaProcesso/Detalhe/listProcessoCompletoAdvogado.seam,
+  conforme o mapeamento de 28/09/2026 (Recursos/pje-elementos-dom.json:
+  inspeção ao vivo + validação sobre o HTML completo salvo).
+
+  Cobre as variantes que a fixture de 27/09 não tinha:
+    - número no onclick do ícone "copiar" do cabeçalho + sigla da classe + <small> de resumo;
+    - datas da <dl> em dd/mm/aaaa e "Prioridade?" com o motivo ("Idoso");
+    - tabela de partes SEM <thead> (cabeçalho da seção é a 1ª <tr>, com <th>);
+    - aba "Outros interessados" (#outrosInteressados);
+    - representante com title movido para data-original-title (tooltip do Bootstrap);
+    - evento com DOIS documentos e número também no onclick de .copiar-clipboard;
+    - ícones de origem PA e OU; paginação já concluída (2 de 2);
+    - painel #detalheDocumento:tituloDocumento / :toolbarDocumento / :quadroDocumento.
+
+  Todos os nomes, documentos, números e tokens são FICTÍCIOS. O token de sessão
+  (`ca=`) do link "Abrir documento em outra página" foi substituído por um
+  marcador: o teste garante que ele não vaza para o contrato.
+-->
+<head>
+    <meta charset="utf-8">
+    <title>1008695-17.2026.8.11.0006 · Tribunal de Justiça de Mato Grosso - 1º Grau</title>
+</head>
+<body>
+
+<div class="navbar navbar-default navbar-fixed-top nav-topo">
+    <form id="navbar" name="navbar" method="post" class="navbar-collapse">
+        <ul class="nav navbar-nav">
+            <li class="dropdown drop-menu mais-detalhes">
+                <a class="titulo-topo dropdown-toggle titulo-topo-desktop" title="Mais detalhes"
+                   data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">ProceComCiv 1008695-17.2026.8.11.0006
+                    <i class="fa fa-clipboard" title="Copiar número para área de transferência"
+                       onclick="copyToClipboard(event, '1008695-17.2026.8.11.0006')"></i>
+                    <span class="caret pull-right mt-20"></span>
+                    <small>FULANO DE TAL e outros X MUNICÍPIO DE EXEMPLO</small>
+                </a>
+
+                <ul class="dropdown-menu">
+                    <li>
+                        <div class="btn-group btn-group-justified btn-tab-group" role="group">
+                            <a href="listProcessoCompletoAdvogado.seam#maisDetalhes" class="btn btn-flat active">Detalhes</a>
+                            <a href="listProcessoCompletoAdvogado.seam#poloAtivo" class="btn btn-flat">Polo Ativo</a>
+                            <a href="listProcessoCompletoAdvogado.seam#poloPassivo" class="btn btn-flat">Polo Passivo</a>
+                            <a href="listProcessoCompletoAdvogado.seam#outrosInteressados" class="btn btn-flat">Outros Interessados</a>
+                        </div>
+
+                        <div id="maisDetalhes" class="col-sm-4 col-xs-12 scroll-y">
+                            <dl class="dl-horizontal">
+                                <dt>Classe judicial</dt>
+                                <dd>PROCEDIMENTO COMUM CÍVEL (7)</dd>
+                                <dt>Assunto</dt>
+                                <dd><ul><li>Fornecimento de medicamentos (12484)</li></ul></dd>
+                                <dt>Jurisdição</dt>
+                                <dd>Vara Única da Comarca de Exemplo</dd>
+                                <dt>Autuação</dt>
+                                <dd>05/01/2026</dd>
+                                <dt>Última distribuição</dt>
+                                <dd>06/01/2026</dd>
+                                <dt>Valor da causa</dt>
+                                <dd>R$ 12.500,00</dd>
+                                <dt>Segredo de justiça?</dt>
+                                <dd>Não</dd>
+                                <dt>Justiça gratuita?</dt>
+                                <dd>Sim</dd>
+                                <dt>Tutela/liminar?</dt>
+                                <dd>Sim</dd>
+                                <dt>Prioridade?</dt>
+                                <dd>Idoso</dd>
+                                <dt>Órgão julgador</dt>
+                                <dd>VARA ÚNICA DE EXEMPLO</dd>
+                            </dl>
+                        </div>
+
+                        <div id="poloAtivo" class="col-sm-4 col-xs-12 scroll-y">
+                            <table class="table">
+                                <tr><th><span class="icon-auto PA mr-5"></span><span>Polo ativo</span></th></tr>
+                                <tr>
+                                    <td>
+                                        <span><span>FULANO DE TAL - CPF: 000.000.000-00 (AUTOR)</span></span>
+                                        <ul class="tree">
+                                            <li><small class="text-muted">
+                                                <i class="fa fa-users mr-10" title="Defensoria"></i>
+                                                <span title="Defensoria">MT - DEFENSORIA PUBLICA DO ESTADO DE MATO GROSSO</span>
+                                            </small></li>
+                                        </ul>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <span><span>BELTRANA DE TAL - CPF: 111.111.111-11 (REPRESENTANTE)</span></span>
+                                        <ul class="tree">
+                                            <li><small class="text-muted">
+                                                <i class="fa fa-user mr-10" title="" data-original-title="Advogado"></i>
+                                                <span title="Advogado">CICRANO ADVOGADO - OAB MT00000</span>
+                                            </small></li>
+                                        </ul>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+
+                        <div id="poloPassivo" class="col-sm-4 col-xs-12 scroll-y">
+                            <table class="table">
+                                <tr><th><span class="icon-auto PP mr-5"></span><span>Polo passivo</span></th></tr>
+                                <tr>
+                                    <td>
+                                        <span><span>MUNICÍPIO DE EXEMPLO - CNPJ: 00.000.000/0001-00 (RÉU)</span></span>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+
+                        <div id="outrosInteressados" class="col-sm-4 col-xs-12 scroll-y">
+                            <table class="table">
+                                <tr><th><span class="icon-auto OU mr-5"></span><span>Outros interessados</span></th></tr>
+                                <tr>
+                                    <td>
+                                        <span><span>MINISTÉRIO PÚBLICO DE EXEMPLO - CNPJ: 22.222.222/0001-22 (FISCAL DA LEI)</span></span>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </li>
+                </ul>
+            </li>
+        </ul>
+    </form>
+</div>
+
+<form id="divTimeLine">
+<div id="divTimeLine:divEventosTimeLine" class="eventos-timeline scroll-y">
+    <input type="hidden" id="totalPaginas" value="2">
+    <input type="hidden" id="paginaAtual" value="2">
+
+    <div id="divTimeLine:eventosTimeLineElement">
+        <div class="media data div-data-rolagem"></div>
+
+        <div class="media data">
+            <div class="media-body"><span class="text-muted data-interna">20 jan 2026</span></div>
+        </div>
+
+        <div class="media interno tipo-D">
+            <div class="media-left"><span class="icon-auto I tip-right" title="" alt="Interno"></span></div>
+            <div class="media-body box">
+                <div class="anexos">
+                    <a href="listProcessoCompletoAdvogado.seam#" id="divTimeLine:j_id424:0:j_id426:0:j_id437">
+                        <i class="fa fa-file-text-o mr-10"></i><span title="">300000003 - Decisão</span>
+                    </a>
+                    <i class="fa fa-clipboard copiar-clipboard" onclick="copyToClipboard(event, '300000003')"></i>
+                    <div class="btn-group btn-group-sm pull-right" role="group">
+                        <a href="#" class="btn btn-flat btn-sm" title="Adicionar lembretes"><i class="fa fa-thumb-tack"></i></a>
+                    </div>
+                </div>
+                <div class="col-sm-12"><small class="text-muted pull-right">16:40</small></div>
+            </div>
+        </div>
+
+        <div class="media interno tipo-D">
+            <div class="media-left"><span class="icon-auto PA tip-right" title="" alt="Polo ativo"></span></div>
+            <div class="media-body box">
+                <div>
+                    <i class="fa fa-bullhorn mr-10"></i>
+                    <span class="text-upper texto-movimento">Juntada de Petição de Manifestação</span>
+                </div>
+                <div class="anexos">
+                    <a href="listProcessoCompletoAdvogado.seam#" id="divTimeLine:j_id424:0:j_id426:1:j_id437">
+                        <i class="fa fa-file-text-o mr-10"></i><span title="">300000002 - Petição</span>
+                    </a>
+                    <i class="fa fa-clipboard copiar-clipboard" onclick="copyToClipboard(event, '300000002')"></i>
+                    <a href="listProcessoCompletoAdvogado.seam#" id="divTimeLine:j_id424:0:j_id426:1:j_id438">
+                        <i class="fa fa-file-text-o mr-10"></i><span title="">Documento de identificação</span>
+                    </a>
+                    <i class="fa fa-clipboard copiar-clipboard" onclick="copyToClipboard(event, '300000001')"></i>
+                    <div class="btn-group btn-group-sm pull-right" role="group">
+                        <a href="#" class="btn btn-flat btn-sm" title="Adicionar lembretes"><i class="fa fa-thumb-tack"></i></a>
+                    </div>
+                </div>
+                <div class="col-sm-12"><small class="text-muted pull-right">14:30</small></div>
+            </div>
+        </div>
+
+        <div class="media data">
+            <div class="media-body"><span class="text-muted data-interna">06 jan 2026</span></div>
+        </div>
+
+        <div class="media interno tipo-M">
+            <div class="media-left"><span class="icon-auto OU tip-right" title="" alt="Outros"></span></div>
+            <div class="media-body box">
+                <div>
+                    <i class="fa fa-bullhorn mr-10"></i>
+                    <span class="text-upper texto-movimento">Ciência do Ministério Público</span>
+                </div>
+                <div class="anexos"></div>
+                <div class="col-sm-12"><small class="text-muted pull-right">09:05</small></div>
+            </div>
+        </div>
+    </div>
+</div>
+</form>
+
+<div id="detalheDocumento" class="col-xs-12 detalhe-documento box">
+    <div id="detalheDocumento:tituloDocumento">
+        <div class="titulo-documento col-md-12 mt-5 mb-10">
+            <h3 class="media-heading">
+                <a title="Abrir documento em outra página"
+                   onclick="window.open('https://pje.tjmt.jus.br/pje/Processo/ConsultaProcesso/Detalhe/documentoHTML.seam?ca=TOKEN-ANONIMIZADO&amp;idProcessoDoc=300000002&amp;idBin=1&amp;exibirAssinaturas=true')">
+                    <span title="300000002 - Petição">300000002 - Petição</span>
+                </a>
+            </h3>
+            <div>Juntado por BELTRANO SERVENTUÁRIO em 20/01/2026 14:30:12</div>
+        </div>
+    </div>
+    <div id="detalheDocumento:toolbarDocumento">
+        <a id="detalheDocumento:primeiroDocumento" class="btn">«</a>
+        <a id="detalheDocumento:documentoAnterior" class="btn">‹</a>
+        <span class="contador-paginas">2 de 3</span>
+        <a id="detalheDocumento:proximoDocumento" class="btn">›</a>
+    </div>
+    <div id="detalheDocumento:quadroDocumento">
+        <iframe id="frameHtml" src="documentoHTML.seam?idProcessoDoc=300000002"></iframe>
+    </div>
+</div>
+
+</body>
+</html>

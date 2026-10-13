@@ -1,0 +1,878 @@
+/* =============================================================================
+   styles.css — Gerador de Expedientes dentro do SESJUR
+   -----------------------------------------------------------------------------
+   A ferramenta vive dentro do layout da aplicação (menu lateral e cabeçalho do
+   SESJUR), no contêiner .ge. TODOS os seletores deste arquivo ficam sob .ge:
+   as classes do gerador (.btn, .campo, .chip…) têm homônimas no app.css e não
+   podem vazar para o resto da página, nem o contrário.
+
+   A aparência vem dos tokens do app.css (cores, fonte, raios, sombras): a
+   paleta abaixo apenas os traduz para os nomes usados pelas regras do gerador.
+   Duas colunas: à esquerda preenche-se (Processo · Modelo · Propriedades); à
+   direita produz-se o documento (ações · ferramentas · folha A4).
+   ============================================================================= */
+
+.ge {
+  --bg:        var(--cinza-050);
+  --surface:   #fff;
+  --surface-2: var(--azul-050);
+  --line:      var(--cinza-200);
+  --line-forte:var(--cinza-300);
+  --ink:       var(--cinza-900);
+  --muted:     var(--cinza-700);
+  --accent:    var(--azul-700);
+  --accent-ink:#fff;
+  --accent-soft: var(--azul-100);
+  --ok:        var(--verde);
+  --warn:      var(--ambar);
+  --warn-soft: var(--ambar-claro);
+  --danger:    var(--vermelho);
+  --danger-soft: var(--vermelho-claro);
+  --papel:     #fff;
+  --papel-ink: #1A1A1A;
+  --tok-bg:    var(--azul-100);
+  --tok-ink:   #2F55B8;
+  --tok-linha: rgba(76, 124, 242, .35);
+  --raio:      var(--raio-sm);
+  --lateral:   320px;
+  /* formato padrão da folha; cada folha recebe o seu por CE.expediente.aplicarFormato */
+  --entrelinha: 1.5; --esp-par: 0pt;
+  --mg-sup: 2.5cm; --mg-dir: 2cm; --mg-inf: 2cm; --mg-esq: 3cm;
+
+  flex: 1; min-height: 0; min-width: 0;
+  display: flex; flex-direction: column; gap: var(--densidade-grade);
+  color: var(--ink);
+}
+
+/* A página do gerador ocupa a altura da janela: quem rola são o painel de
+   propriedades e a mesa do documento, não a página. O rodapé institucional
+   cede o espaço à ferramenta. */
+.conteudo:has(.ge) { height: 100vh; }
+.main:has(.ge) { min-height: 0; max-width: none; display: flex; flex-direction: column; }
+.conteudo:has(.ge) .rodape { display: none; }
+
+
+.ge * { box-sizing: border-box; }
+
+/* Precisa vir antes das regras de display: .aviso/.menu usam flex e, sem isto,
+   venceriam a regra padrão do navegador para o atributo [hidden]. */
+.ge [hidden] { display: none !important; }
+
+/* (regra global removida: html, body) */
+
+/* (regra global removida: body) */
+
+.ge button, .ge input, .ge textarea, .ge select { font: inherit; color: inherit; }
+.ge code { font-family: "Cascadia Mono", Consolas, "Liberation Mono", monospace; }
+
+.ge .so-leitor {
+  position: absolute; width: 1px; height: 1px; overflow: hidden;
+  clip: rect(0 0 0 0); white-space: nowrap;
+}
+.ge .btn.so-estreito { display: none; }
+.ge .espaco { margin-left: auto; }
+.ge .dica { font-size: 11.5px; color: var(--muted); white-space: nowrap; }
+
+.ge button:focus-visible, .ge select:focus-visible, .ge summary:focus-visible, .ge a:focus-visible {
+  outline: 2px solid var(--accent); outline-offset: 2px;
+}
+
+/* ---------------------------------------------------------------- cabeçalho */
+.ge .topo {
+  flex: none;
+  display: flex; align-items: center; gap: 14px;
+  padding: 8px 16px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--line);
+}
+.ge .marca { display: flex; align-items: baseline; gap: 10px; min-width: 0; }
+.ge .marca h1 { margin: 0; font-size: 15px; font-weight: 600; letter-spacing: -0.01em; white-space: nowrap; }
+.ge .marca .org {
+  font-size: 11px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase;
+  color: var(--accent); padding: 2px 7px; border: 1px solid var(--accent); border-radius: 3px;
+  white-space: nowrap;
+}
+.ge .chip-protocolo {
+  font-size: 12px; font-weight: 600; padding: 2px 9px;
+  border: 1px solid var(--line-forte); border-radius: 999px; background: var(--surface-2);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 30vw;
+}
+.ge .indicador-salvo { font-size: 11.5px; color: var(--muted); white-space: nowrap; }
+.ge .indicador-salvo.falha { color: var(--danger); font-weight: 600; }
+
+.ge .selo {
+  font-size: 10.5px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase;
+  padding: 3px 9px; border-radius: 999px; border: 1px solid;
+  white-space: nowrap;
+}
+.ge .selo-editing { color: var(--muted); border-color: var(--line-forte); background: var(--surface-2); }
+.ge .selo-preview { color: var(--warn); border-color: var(--warn); background: var(--warn-soft); }
+.ge .selo-ready { color: var(--ok); border-color: var(--ok); background: var(--accent-soft); }
+
+/* ------------------------------------------------------------------ layout */
+.ge .app {
+  flex: 1; min-height: 0;
+  display: grid;
+  grid-template-columns: var(--lateral) minmax(0, 1fr);
+}
+
+.ge .lateral {
+  min-height: 0; overflow-y: auto;
+  background: var(--surface);
+  border-right: 1px solid var(--line);
+}
+.ge .secao { padding: 14px 16px 16px; border-bottom: 1px solid var(--line); display: flex; flex-direction: column; gap: 10px; }
+.ge .secao:last-child { border-bottom: none; }
+.ge .secao > h2 {
+  margin: 0; font-size: 11px; font-weight: 600;
+  letter-spacing: .1em; text-transform: uppercase; color: var(--muted);
+  display: flex; align-items: center; gap: 8px;
+}
+.ge .conta {
+  font-size: 10px; font-weight: 700; letter-spacing: 0;
+  background: var(--accent-soft); color: var(--accent);
+  border-radius: 999px; padding: 1px 7px;
+}
+
+.ge .trabalho { min-width: 0; min-height: 0; display: flex; flex-direction: column; }
+
+/* barras fixas acima do documento: a rolagem acontece só na mesa */
+.ge .barras {
+  flex: none; position: sticky; top: 0; z-index: 15;
+  background: var(--surface);
+  border-bottom: 1px solid var(--line);
+}
+.ge .barra-acoes {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  padding: 8px 16px;
+}
+.ge .mesa {
+  flex: 1; min-height: 0; overflow: auto;
+  padding: 24px 16px 12px;
+  --entrelinha: 1.5; --esp-par: 0pt;
+  --mg-sup: 2.5cm; --mg-dir: 2cm; --mg-inf: 2cm; --mg-esq: 3cm;
+}
+
+/* controle segmentado Editar | Visualizar */
+.ge .segmentado {
+  display: inline-flex; padding: 2px;
+  background: var(--surface-2); border: 1px solid var(--line-forte); border-radius: 6px;
+}
+.ge .segmentado button {
+  border: none; background: none; cursor: pointer;
+  padding: 5px 14px; border-radius: 4px; font-size: 13px; font-weight: 500; color: var(--muted);
+}
+.ge .segmentado button:hover { color: var(--ink); }
+.ge .segmentado button.ativo { background: var(--accent); color: var(--accent-ink); font-weight: 600; }
+
+/* --------------------------------------------------------------- formulário */
+.ge .campos { display: flex; flex-direction: column; gap: 10px; }
+.ge .campos:empty { display: none; }
+
+.ge .campo { display: flex; flex-direction: column; gap: 5px; }
+.ge .campo > label, .ge .prop-cab > label { font-size: 12.5px; font-weight: 600; }
+.ge .campo .op {
+  font-size: 10px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase;
+  color: var(--muted); border: 1px solid var(--line-forte); border-radius: 3px; padding: 0 4px;
+}
+.ge .campo .op-obrig { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
+
+.ge .campo input, .ge .campo textarea, .ge .campo select, .ge .busca {
+  width: 100%; padding: 7px 10px;
+  background: var(--surface-2);
+  border: 1px solid var(--line-forte); border-radius: 5px;
+  transition: border-color .12s, box-shadow .12s;
+}
+.ge .campo textarea { resize: vertical; min-height: 62px; line-height: 1.45; }
+.ge .campo select { cursor: pointer; }
+.ge .campo input:focus, .ge .campo textarea:focus, .ge .campo select:focus, .ge .busca:focus {
+  outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft);
+}
+.ge .campo .ajuda { font-size: 11.5px; color: var(--muted); }
+.ge .campo .ajuda code, .ge .vazio-props code {
+  font-size: 11px; background: var(--tok-bg); color: var(--tok-ink); padding: 0 3px; border-radius: 3px;
+}
+.ge .campo .erro, .ge .dlg .erro { font-size: 11.5px; color: var(--danger); font-weight: 500; }
+.ge .campo.invalido input, .ge .campo.invalido textarea, .ge .campo.invalido select {
+  border-color: var(--danger); background: var(--danger-soft);
+}
+
+.ge .linha-campo { display: flex; align-items: center; gap: 4px; }
+.ge .linha-campo input { flex: 1; min-width: 0; }
+.ge #protocolo { font-weight: 600; }
+
+.ge .modelo-desc {
+  margin: 3px 0 0; font-size: 12px; color: var(--muted);
+  padding-left: 9px; border-left: 2px solid var(--accent);
+}
+
+/* card de cada propriedade */
+.ge .campo-prop {
+  padding: 9px 10px; border: 1px solid var(--line); border-radius: 5px; background: var(--surface-2);
+}
+.ge .campo-prop input, .ge .campo-prop textarea, .ge .campo-prop select { background: var(--surface); }
+.ge .campo-proprio { border-left: 3px solid var(--accent); }
+.ge .prop-cab { display: flex; align-items: flex-start; gap: 6px; }
+.ge .prop-cab > label { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.ge .prop-meta { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
+.ge .prop-acoes { display: inline-flex; gap: 2px; flex: none; }
+
+.ge .tok-etiqueta {
+  font-family: "Cascadia Mono", Consolas, monospace;
+  font-size: 10.5px; font-weight: 500;
+  background: var(--tok-bg); color: var(--tok-ink);
+  border: 1px solid var(--tok-linha); border-radius: 3px;
+  padding: 0 4px; cursor: pointer; max-width: 100%; overflow-wrap: anywhere; text-align: left;
+}
+.ge .tok-etiqueta:hover { filter: brightness(.94); }
+
+.ge .btn-prop {
+  width: 22px; height: 22px; flex: none;
+  display: inline-flex; align-items: center; justify-content: center;
+  border: 1px solid transparent; border-radius: 3px;
+  background: none; color: var(--muted);
+  font-size: 11px; line-height: 1; cursor: pointer;
+}
+.ge .btn-prop:hover:not(:disabled) { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
+.ge .btn-prop:disabled { opacity: .3; cursor: default; }
+.ge .btn-prop-perigo:hover:not(:disabled) { color: var(--danger); border-color: var(--danger); background: var(--danger-soft); }
+
+.ge .vazio-props {
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  padding: 22px 16px; text-align: center;
+  border: 1px dashed var(--line-forte); border-radius: var(--raio);
+  background: var(--surface-2);
+}
+.ge .vazio-props .vazio-titulo { margin: 0; font-size: 13px; font-weight: 600; }
+.ge .vazio-props .vazio-texto { margin: 0; font-size: 12px; color: var(--muted); }
+
+.ge .linha-check { display: flex; align-items: center; gap: 8px; font-size: 12.5px; font-weight: 600; cursor: pointer; }
+.ge .linha-check input { width: auto; accent-color: var(--accent); }
+
+.ge .lista-opcoes { display: flex; flex-direction: column; gap: 5px; }
+.ge .lista-opcoes:empty { display: none; }
+.ge .linha-opcao { display: flex; align-items: center; gap: 4px; }
+
+/* ------------------------------------------------------------------ botões */
+.ge .botoes { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+
+.ge .btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  padding: 6px 14px;
+  border: 1px solid var(--line-forte); border-radius: 5px;
+  background: var(--surface);
+  font-size: 13px; font-weight: 500; cursor: pointer; white-space: nowrap;
+  transition: background .12s, border-color .12s, opacity .12s;
+}
+.ge .btn:hover:not(:disabled) { background: var(--surface-2); border-color: var(--accent); }
+.ge .btn:disabled { opacity: .45; cursor: not-allowed; }
+.ge .btn-principal {
+  background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 600;
+}
+.ge .btn-principal:hover:not(:disabled) { background: var(--accent); filter: brightness(1.08); }
+.ge .btn-perigo-cheio, .ge .btn-perigo-cheio:hover:not(:disabled) { background: var(--danger); border-color: var(--danger); color: #fff; }
+.ge .btn-fantasma { background: transparent; border-color: transparent; color: var(--muted); }
+.ge .btn-fantasma:hover:not(:disabled) { background: var(--surface-2); color: var(--ink); }
+.ge .btn-perigo:hover:not(:disabled) { border-color: var(--danger); color: var(--danger); background: var(--danger-soft); }
+.ge .btn.ativo { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); font-weight: 600; }
+.ge .btn-alerta { background: var(--warn-soft); border-color: var(--warn); color: var(--warn); font-weight: 600; white-space: normal; text-align: left; }
+.ge .btn-alerta:hover:not(:disabled) { background: var(--warn-soft); border-color: var(--warn); filter: brightness(.97); }
+.ge .btn-mini { padding: 4px 10px; font-size: 12px; }
+
+/* ------------------------------------------------------ barra de ferramentas */
+.ge .ferramentas {
+  display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+  padding: 6px 16px;
+  background: var(--surface-2);
+  border-top: 1px solid var(--line);
+}
+.ge .grupo-fer { display: flex; gap: 1px; padding: 2px; background: var(--surface); border: 1px solid var(--line-forte); border-radius: 5px; }
+.ge .btn-fer {
+  width: 28px; height: 26px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border: none; background: none; border-radius: 3px; cursor: pointer;
+  font-size: 13px; line-height: 1;
+}
+.ge .btn-fer:hover { background: var(--accent-soft); }
+.ge .btn-fer.ativo { background: var(--accent); color: var(--accent-ink); }
+.ge .btn-fer sub { font-size: 9px; }
+.ge .ic { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; }
+.ge .ic .ic-ponto { stroke-width: 2.4; }
+.ge .sel-fer {
+  height: 32px; padding: 0 6px; cursor: pointer;
+  background: var(--surface); border: 1px solid var(--line-forte); border-radius: 5px; font-size: 12.5px;
+}
+.ge .sel-curto { width: 64px; }
+.ge .rotulo-fer { display: inline-flex; align-items: center; color: var(--muted); margin-right: -2px; }
+
+.ge .faixa-preview {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 8px 16px; background: var(--surface-2); border-top: 1px solid var(--line);
+}
+.ge .faixa-avisos { flex: 1; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+
+/* menus suspensos */
+.ge .menu-wrap { position: relative; }
+.ge .menu {
+  position: absolute; right: 0; top: calc(100% + 6px); z-index: 30;
+  min-width: 250px; max-width: min(92vw, 360px); padding: 5px;
+  background: var(--surface); border: 1px solid var(--line-forte);
+  border-radius: var(--raio); box-shadow: var(--sombra);
+  display: flex; flex-direction: column;
+}
+.ge .menu-esq { right: auto; left: 0; }
+.ge .menu button {
+  text-align: left; border: none; background: none;
+  padding: 7px 10px; border-radius: 4px; cursor: pointer; font-size: 13px;
+  display: flex; flex-direction: column; gap: 1px;
+}
+.ge .menu button:hover, .ge .menu button:focus-visible { background: var(--accent-soft); }
+.ge .menu button small { color: var(--muted); font-size: 11px; font-weight: 400; }
+.ge .menu-sep { height: 1px; margin: 4px 6px; background: var(--line); }
+.ge .menu-props { max-height: 380px; overflow-y: auto; }
+.ge .menu-props button small { font-family: "Cascadia Mono", Consolas, monospace; overflow-wrap: anywhere; }
+.ge .menu-props button small.sem-valor { color: var(--warn); }
+.ge .menu-form { padding: 12px; gap: 10px; }
+.ge .menu-titulo {
+  font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
+  color: var(--muted); padding: 8px 10px 4px;
+}
+.ge .lateral .menu { max-width: calc(var(--lateral) - 32px); min-width: calc(var(--lateral) - 32px); }
+
+/* ------------------------------------------------------- folha A4 e editor */
+.ge .folha {
+  position: relative;
+  width: 210mm; max-width: 100%; min-height: 297mm;
+  margin: 0 auto;
+  padding: var(--mg-sup) var(--mg-dir) var(--mg-inf) var(--mg-esq);
+  background-color: var(--papel); color: var(--papel-ink);
+  /* marca discreta a cada 297 mm: onde termina cada página A4 */
+  background-image: linear-gradient(to bottom, transparent calc(297mm - 1px), #C9CFCC calc(297mm - 1px));
+  background-size: 100% 297mm;
+  border: 1px solid var(--line); border-radius: 2px;
+  box-shadow: var(--sombra);
+  font-family: Tinos, "Times New Roman", Times, serif;
+  font-size: 12pt; line-height: var(--entrelinha);
+  overflow-wrap: break-word;
+}
+@media (max-width: 900px) {
+  .ge .folha { padding: min(var(--mg-sup), 7vw) min(var(--mg-dir), 6vw) min(var(--mg-inf), 7vw) min(var(--mg-esq), 6vw); }
+}
+
+.ge .folha p { margin: 0 0 var(--esp-par); }
+.ge .folha h1 { margin: 0 0 var(--esp-par); font-size: 14pt; font-weight: 700; }
+.ge .folha h2 { margin: 0 0 var(--esp-par); font-size: 12pt; font-weight: 700; }
+.ge .folha blockquote { margin: 0 0 var(--esp-par) 4cm; font-size: 10pt; line-height: 1.2; text-align: justify; }
+.ge .folha ul, .ge .folha ol { margin: 0 0 var(--esp-par); padding-left: 1.25cm; }
+.ge .folha table { width: 100%; border-collapse: collapse; margin: 0 0 var(--esp-par); }
+.ge .folha td, .ge .folha th { border: 1px solid #000; padding: 3px 6px; vertical-align: top; min-width: 1.5em; }
+.ge .folha hr { border: none; border-top: 1px solid #000; margin: .6em 0; }
+.ge .folha a { color: #0B4EA2; }
+.ge .folha hr.quebra-pagina {
+  border-top: 1px dashed #8A938E; margin: 1.2em calc(-1 * var(--mg-dir)) 1.2em calc(-1 * var(--mg-esq));
+  overflow: visible; text-align: center;
+}
+.ge .folha hr.quebra-pagina::after {
+  content: "Quebra de página"; position: relative; top: -.85em; padding: 0 8px;
+  background: var(--papel); color: #6B746F;
+  font: 600 10px/1 "IBM Plex Sans", sans-serif; letter-spacing: .08em; text-transform: uppercase;
+}
+
+.ge .folha .ci-vazio { min-height: .85em; }
+.ge .folha .ci-just { text-align: justify; text-indent: 1.9em; }
+.ge .folha .ci-hdr { text-align: center; }
+.ge .folha .ci-dir { text-align: right; }
+.ge .folha .ci-esq { text-align: left; }
+
+.ge .editor { cursor: text; }
+.ge .editor:focus { outline: none; border-color: var(--accent); box-shadow: var(--sombra), 0 0 0 3px var(--accent-soft); }
+.ge .editor.vazio::before {
+  content: attr(data-placeholder);
+  position: absolute; left: var(--mg-esq); right: var(--mg-dir); top: var(--mg-sup);
+  color: #8A938E; font-style: italic; pointer-events: none;
+}
+
+/* propriedade dentro do editor: chip com o título */
+.ge .tok {
+  font-family: "IBM Plex Sans", sans-serif;
+  font-size: .78em; font-weight: 500; font-style: normal; text-indent: 0;
+  background: #EAF1FB; color: #1C4E8A;
+  border: 1px solid #A8C6EA; border-radius: 4px;
+  padding: 1px 6px; margin: 0 1px; white-space: nowrap; cursor: default;
+  user-select: all;
+}
+
+/* valor substituído na visualização */
+.ge .ci-var { border-radius: 2px; }
+.ge #folha.destacar .ci-var { background: #FFF3BF; box-shadow: 0 0 0 1px #E8D26A; }
+.ge .ci-falta {
+  background: #FBF1DC; color: #8A5A10;
+  border: 1px dashed currentColor; border-radius: 3px; padding: 0 4px;
+  font-family: "IBM Plex Sans", sans-serif; font-size: .8em;
+  text-transform: uppercase; letter-spacing: .04em;
+}
+/* pendência OPCIONAL: sinalizada, mas não impede a exportação */
+.ge .ci-falta-opcional { background: transparent; color: #6B746F; border-style: dotted; }
+
+.ge .rodape-dica {
+  width: 210mm; max-width: 100%; margin: 14px auto 0;
+  font-size: 11.5px; color: var(--muted); text-align: center;
+}
+
+/* ------------------------------------------------------ avisos / conferência */
+.ge .aviso {
+  display: flex; gap: 8px; padding: 7px 12px; border-radius: 5px;
+  font-size: 12.5px; border-left: 3px solid;
+}
+.ge .aviso-erro { background: var(--danger-soft); color: var(--danger); border-color: var(--danger); }
+.ge .aviso-info { background: var(--accent-soft); color: var(--ok); border-color: var(--accent); }
+.ge .aviso-alerta { background: var(--warn-soft); color: var(--warn); border-color: var(--warn); }
+
+.ge .conferencia {
+  width: 210mm; max-width: 100%; margin: 14px auto 0;
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--raio);
+}
+.ge .conferencia summary {
+  padding: 10px 14px; cursor: pointer;
+  font-size: 11px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--muted);
+}
+.ge .auditoria { display: flex; flex-direction: column; gap: 1px; background: var(--line); border-top: 1px solid var(--line); }
+.ge .aud-linha {
+  display: grid; grid-template-columns: 18px minmax(120px, 1fr) minmax(0, 1.4fr);
+  gap: 10px; align-items: baseline; padding: 8px 14px;
+  background: var(--surface); font-size: 12.5px;
+}
+.ge .aud-linha .marca-status { font-weight: 700; text-align: center; }
+.ge .aud-ok .marca-status { color: var(--ok); }
+.ge .aud-falha .marca-status { color: var(--danger); }
+.ge .aud-na .marca-status { color: var(--muted); }
+.ge .aud-linha .rot { color: var(--muted); }
+.ge .aud-linha .val { font-weight: 600; word-break: break-word; }
+.ge .aud-linha .val.vazio { font-weight: 400; color: var(--muted); font-style: italic; }
+.ge .aud-linha .nota { grid-column: 2 / -1; color: var(--muted); font-size: 11.5px; }
+
+/* --------------------------------------------------------------- diálogos */
+.ge .dlg {
+  width: min(92vw, 460px); max-height: 90vh; overflow-y: auto;
+  border: 1px solid var(--line-forte); border-radius: var(--raio);
+  background: var(--surface); color: var(--ink);
+  box-shadow: var(--sombra); padding: 20px;
+}
+.ge .dlg::backdrop { background: rgba(10, 20, 15, .45); }
+.ge .dlg h2 { margin: 0 0 8px; font-size: 15px; font-weight: 600; }
+.ge .dlg .dlg-msg { margin: 0 0 14px; font-size: 13px; color: var(--muted); }
+.ge .dlg .campo { margin-bottom: 12px; }
+.ge .dlg > .erro { margin-bottom: 10px; }
+.ge .dlg-botoes { justify-content: flex-end; margin-top: 4px; }
+
+/* ------------------------------------------------------------------- toast */
+.ge .toast-area {
+  position: fixed; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px));
+  transform: translateX(-50%); z-index: 60;
+  display: flex; flex-direction: column; gap: 8px; align-items: center;
+  pointer-events: none; width: min(92vw, 480px);
+}
+.ge .toast {
+  width: 100%; padding: 10px 14px; border-radius: 6px;
+  background: var(--ink); color: var(--bg); font-size: 13px;
+  box-shadow: var(--sombra); animation: sobe .18s ease-out;
+}
+.ge .toast.erro { background: var(--danger); color: #fff; }
+@keyframes sobe { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .ge .toast { animation: none; }
+  .ge * { transition: none !important; }
+}
+
+/* --------------------------------------------------------- telas estreitas
+   O painel lateral vira gaveta: o documento fica com a largura inteira. */
+@media (max-width: 1280px) {
+  .ge .btn.so-estreito { display: inline-flex; }
+  .ge .app { grid-template-columns: minmax(0, 1fr); position: relative; }
+  .ge .lateral {
+    position: absolute; z-index: 40; top: 0; bottom: 0; left: 0;
+    width: min(var(--lateral), 88vw);
+    transform: translateX(-100%); transition: transform .16s ease-out;
+    box-shadow: var(--sombra);
+  }
+  .ge .lateral.aberto { transform: none; }
+  .ge .indicador-salvo, .ge .dica { display: none; }
+  .ge .mesa { padding: 12px 8px; }
+}
+
+/* Telas muito estreitas: só a barra de ações fica fixa; as ferramentas rolam
+   junto com o documento, para não comprimir a área do texto. */
+@media (max-width: 700px) {
+  .ge .trabalho { display: block; overflow-y: auto; }
+  .ge .barras { display: contents; }
+  .ge .barra-acoes {
+    position: sticky; top: 0; z-index: 16;
+    background: var(--surface); border-bottom: 1px solid var(--line);
+  }
+  .ge .ferramentas, .ge .faixa-preview { border-top: none; border-bottom: 1px solid var(--line); }
+  .ge .mesa { overflow: visible; }
+  .ge .chip-protocolo { display: none; }
+}
+
+/* -------------------------------------------------------------- impressão
+   As margens da página vêm de um @page gerado pela aplicação (ver app.js). */
+@media print {
+  /* (regra global removida: html, body) */
+  /* (regra global removida: body) */
+  .ge .nao-imprimir, .ge .editor, .ge .toast-area, .ge dialog { display: none !important; }
+  body.imprimindo-lote #visaoCriador { display: none !important; }
+  body.imprimindo-lote #impressaoLote {
+    display: block !important; width: auto; min-height: 0; padding: 0;
+    border: none; box-shadow: none; background: #fff; color: #000;
+  }
+  .ge .doc-lote { break-after: page; page-break-after: always; }
+  .ge .doc-lote:last-child { break-after: auto; page-break-after: auto; }
+  .ge .app, .ge .trabalho { display: block; }
+  .ge .mesa { overflow: visible; padding: 0; }
+  .ge #folha {
+    display: block !important;
+    width: auto; min-height: 0; padding: 0;
+    border: none; box-shadow: none; background: #fff; color: #000;
+  }
+  .ge #folha.destacar .ci-var { background: none; box-shadow: none; }
+  .ge .ci-falta { border: 1px dashed #888; color: #555; background: none; }
+  .ge .folha hr.quebra-pagina { border: none; margin: 0; height: 0; page-break-after: always; }
+  .ge .folha hr.quebra-pagina::after { content: none; }
+}
+
+/* =============================================================================
+   NAVEGAÇÃO · BIBLIOTECA DE MODELOS · PRODUÇÃO EM LOTE
+   ============================================================================= */
+.ge #impressaoLote { display: none; }
+
+.ge .nav-principal { display: flex; gap: 2px; margin-left: 8px; }
+.ge .nav-principal a {
+  padding: 6px 12px; border-radius: 5px; font-size: 13px; font-weight: 500;
+  color: var(--muted); text-decoration: none; white-space: nowrap;
+}
+.ge .nav-principal a:hover { background: var(--surface-2); color: var(--ink); }
+.ge .nav-principal a[aria-current="page"] { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+.ge .segmentado a {
+  padding: 5px 14px; border-radius: 4px; font-size: 13px; font-weight: 500;
+  color: var(--muted); text-decoration: none; white-space: nowrap;
+}
+.ge .segmentado a:hover { color: var(--ink); }
+.ge .segmentado a.ativo { background: var(--accent); color: var(--accent-ink); font-weight: 600; }
+body:not([data-visao="criador"]) .chip-protocolo, body:not([data-visao="criador"]) #indicadorSalvo, body:not([data-visao="criador"]) #btnPainel { display: none; }
+
+.ge .faixa-modelo {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  padding: 7px 16px; font-size: 12.5px;
+  background: var(--warn-soft); color: var(--warn); border-bottom: 1px solid var(--line);
+}
+.ge .faixa-modelo a { text-decoration: none; color: var(--ink); }
+
+.ge .visao { flex: 1; min-height: 0; overflow: auto; }
+.ge .pagina { max-width: 1240px; margin: 0 auto; padding: 22px 20px 40px; }
+.ge .pagina-estreita { max-width: 860px; }
+.ge .pagina-topo { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+.ge .pagina-topo h2 { margin: 0; font-size: 20px; font-weight: 600; letter-spacing: -0.01em; }
+.ge .visao a.btn { text-decoration: none; }
+.ge .dica-pagina { margin: -6px 0 16px; color: var(--muted); font-size: 13px; }
+.ge .sub-pagina {
+  margin: 28px 0 10px; font-size: 11px; font-weight: 600; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--muted);
+}
+.ge .vazio-grande { padding: 44px 20px; }
+.ge .cartao-form {
+  display: flex; flex-direction: column; gap: 14px; padding: 16px;
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--raio);
+}
+
+/* ------------------------------------------------------------- biblioteca */
+.ge .bib-filtros { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+.ge .busca-grande { flex: 1; min-width: 240px; padding: 10px 14px; font-size: 15px; background: var(--surface); }
+.ge .rotulo-linha { font-size: 12px; color: var(--muted); }
+.ge .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 18px; }
+.ge .chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 11px; border: 1px solid var(--line-forte); border-radius: 999px;
+  background: var(--surface); font-size: 12.5px; cursor: pointer;
+}
+.ge .chip:hover { border-color: var(--accent); }
+.ge .chip.ativo { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 600; }
+.ge .chip-n { font-size: 11px; opacity: .75; }
+
+.ge .grade-modelos { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 14px; }
+.ge .cartao-modelo {
+  display: flex; flex-direction: column; gap: 6px; padding: 14px;
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--raio);
+}
+.ge .cartao-modelo:hover { border-color: var(--line-forte); box-shadow: var(--sombra); }
+.ge .cartao-modelo header { display: flex; align-items: center; justify-content: space-between; }
+.ge .cartao-tipo {
+  font-size: 10.5px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; color: var(--accent);
+}
+.ge .cartao-modelo h3, .ge .cartao-lote h3 { margin: 0; font-size: 15px; font-weight: 600; line-height: 1.3; overflow-wrap: anywhere; }
+.ge .cartao-desc {
+  margin: 0; font-size: 12.5px; color: var(--muted); flex: 1;
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+}
+.ge .cartao-meta { margin: 0; font-size: 11.5px; color: var(--muted); }
+.ge .cartao-modelo footer { display: flex; align-items: center; justify-content: space-between; margin-top: 6px; }
+.ge .btn-estrela {
+  border: none; background: none; cursor: pointer; font-size: 17px; line-height: 1; color: var(--line-forte); padding: 2px 4px;
+}
+.ge .btn-estrela:hover, .ge .btn-estrela.ativo { color: #C99A1A; }
+.ge .menu-cartao { position: relative; }
+.ge .menu-cartao summary { list-style: none; }
+.ge .menu-cartao summary::-webkit-details-marker { display: none; }
+.ge .menu-cartao .menu { top: auto; bottom: calc(100% + 6px); }
+.ge .menu button.item-perigo { color: var(--danger); }
+
+.ge .dlg-largo { width: min(94vw, 980px); }
+.ge .dlg-topo { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 6px; }
+.ge .dlg-topo h2 { margin: 2px 0 0; }
+.ge .previa-modelo { display: grid; grid-template-columns: 250px minmax(0, 1fr); gap: 18px; margin-bottom: 14px; }
+.ge .previa-modelo h3 {
+  margin: 0 0 8px; font-size: 11px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--muted);
+  display: flex; align-items: center; gap: 8px;
+}
+.ge .lista-props { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 8px; font-size: 12.5px; }
+.ge .lista-props code { display: block; font-size: 10.5px; color: var(--tok-ink); overflow-wrap: anywhere; }
+.ge .folha-previa {
+  width: auto; min-height: 0; max-height: 56vh; overflow: auto; background-image: none; box-shadow: none;
+  padding: 24px 28px; font-size: 11pt;
+}
+@media (max-width: 760px) { .ge .previa-modelo { grid-template-columns: minmax(0, 1fr); } }
+
+/* ------------------------------------------------------------------ lotes */
+.ge .lista-lotes { display: flex; flex-direction: column; gap: 8px; }
+.ge .cartao-lote {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 12px 14px;
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--raio);
+}
+
+.ge .lote { height: 100%; display: flex; flex-direction: column; }
+.ge .lote-topo {
+  flex: none; display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  padding: 8px 16px; background: var(--surface); border-bottom: 1px solid var(--line);
+}
+.ge .lote-modelo { font-size: 13px; }
+.ge .lote-titulo {
+  flex: 1; min-width: 200px; padding: 6px 10px; font-weight: 600;
+  background: var(--surface-2); border: 1px solid var(--line-forte); border-radius: 5px;
+}
+.ge .lote-titulo:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.ge .abas { flex: none; display: flex; gap: 2px; padding: 0 16px; background: var(--surface); border-bottom: 1px solid var(--line); }
+.ge .abas button {
+  border: none; background: none; cursor: pointer; padding: 9px 14px; font-size: 13px; font-weight: 500;
+  color: var(--muted); border-bottom: 2px solid transparent; margin-bottom: -1px;
+}
+.ge .abas button:hover { color: var(--ink); }
+.ge .abas button.ativo { color: var(--accent); border-bottom-color: var(--accent); font-weight: 600; }
+.ge .lote-corpo { flex: 1; min-height: 0; overflow: auto; padding: 12px 16px; display: flex; flex-direction: column; gap: 10px; }
+.ge .lote-corpo > * { flex: none; }
+.ge .lote-rodape {
+  flex: none; display: flex; align-items: center; gap: 8px; padding: 9px 16px;
+  background: var(--surface); border-top: 1px solid var(--line);
+}
+.ge .lote-barra { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.ge .grupo-sel {
+  display: inline-flex; align-items: center; gap: 6px; padding: 3px 8px; margin-left: 4px;
+  background: var(--accent-soft); border-radius: 5px; font-size: 12px;
+}
+
+.ge .resumo-validacao {
+  display: flex; align-items: center; gap: 14px; flex-wrap: wrap; padding: 8px 12px; font-size: 12.5px;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 5px;
+}
+.ge .rv-ok { color: var(--ok); font-weight: 600; }
+.ge .rv-aviso { color: var(--warn); font-weight: 600; }
+.ge .rv-erro { color: var(--danger); font-weight: 600; }
+.ge .naveg-erros { display: inline-flex; align-items: center; gap: 8px; }
+
+.ge .grade-rolagem { overflow: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 5px; }
+.ge .grade { border-collapse: separate; border-spacing: 0; width: 100%; font-size: 13px; }
+.ge .grade th {
+  position: sticky; top: 0; z-index: 2; text-align: left; white-space: nowrap;
+  padding: 7px 8px; font-size: 12px; font-weight: 600;
+  background: var(--surface-2); border-bottom: 1px solid var(--line-forte); border-right: 1px solid var(--line);
+}
+.ge .grade td { padding: 0; border-bottom: 1px solid var(--line); border-right: 1px solid var(--line); vertical-align: middle; }
+.ge .grade tr.selecionada td { background: var(--accent-soft); }
+.ge .grade .obrig { color: var(--danger); }
+.ge .grade .col-fixa { width: 34px; text-align: center; padding: 0 8px; }
+.ge .grade .col-num { width: 44px; text-align: right; padding: 0 8px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.ge .grade .col-status { padding: 3px 8px; white-space: nowrap; }
+.ge .grade .col-acoes { white-space: nowrap; padding: 2px 6px; border-right: none; }
+.ge .grade .grade-vazia { padding: 26px; text-align: center; color: var(--muted); }
+.ge .grade-leitura td { padding: 6px 8px; }
+.ge .cel {
+  display: block; width: 100%; min-width: 150px; padding: 7px 8px;
+  border: 1px solid transparent; border-radius: 0; background: transparent;
+}
+.ge select.cel { cursor: pointer; }
+.ge .cel:focus { outline: none; border-color: var(--accent); background: var(--surface); box-shadow: inset 0 0 0 1px var(--accent); }
+.ge .cel-erro { background: var(--danger-soft); box-shadow: inset 0 -2px 0 var(--danger); }
+.ge .cel-falta { background: var(--warn-soft); box-shadow: inset 0 -2px 0 var(--warn); }
+.ge .cel-foco { box-shadow: inset 0 0 0 2px var(--accent); }
+
+.ge .status {
+  display: inline-block; margin-right: 4px; padding: 1px 8px; border-radius: 999px;
+  font-size: 10.5px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; border: 1px solid;
+}
+.ge .status-pronto { color: var(--ok); border-color: var(--ok); }
+.ge .status-gerado { color: var(--accent-ink); background: var(--accent); border-color: var(--accent); }
+.ge .status-incompleto, .ge .status-aviso { color: var(--warn); border-color: var(--warn); background: var(--warn-soft); }
+.ge .status-erro { color: var(--danger); border-color: var(--danger); background: var(--danger-soft); }
+
+.ge .paginacao { display: flex; align-items: center; gap: 8px; font-size: 12.5px; }
+.ge .previa-topo { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 13px; }
+.ge .previa-dados { display: inline-flex; gap: 14px; flex-wrap: wrap; margin-left: 6px; font-size: 12.5px; }
+.ge .mesa-lote { padding: 8px 0 16px; }
+.ge .resultado { display: flex; flex-direction: column; gap: 12px; max-width: 980px; }
+.ge .resultado-conta { margin: 0; font-size: 14px; }
+
+.ge .dlg-editor { width: min(96vw, 900px); }
+.ge .dlg-editor .ferramentas { border: 1px solid var(--line); border-radius: 5px 5px 0 0; }
+.ge .mesa-dialogo {
+  max-height: 52vh; overflow: auto; padding: 14px; margin-bottom: 14px;
+  background: var(--bg); border: 1px solid var(--line); border-top: none; border-radius: 0 0 5px 5px;
+}
+.ge .mesa-dialogo .folha { min-height: 12cm; background-image: none; }
+.ge .btn-fer-texto { width: auto; padding: 0 7px; font-size: 11.5px; }
+
+.ge .dlg-progresso { width: min(92vw, 420px); }
+.ge .barra-progresso {
+  height: 10px; margin: 6px 0 10px; overflow: hidden;
+  background: var(--surface-2); border: 1px solid var(--line-forte); border-radius: 999px;
+}
+.ge .barra-progresso-cheio { height: 100%; width: 0; background: var(--accent); transition: width .12s; }
+
+@media (max-width: 1100px) {
+  .ge .nav-principal a { padding: 6px 8px; }
+  .ge .marca h1 { display: none; }
+}
+
+/* a planilha rola dentro da própria área: o cabeçalho das colunas fica fixo */
+.ge .lote-corpo > .grade-rolagem { flex: 1 1 auto; min-height: 220px; }
+
+/* ------------------------------------------------- integração com o SESJUR */
+.ge .marca a.org { text-decoration: none; }
+.ge .marca a.org:hover { background: var(--accent-soft); }
+.ge a.chip-protocolo { color: inherit; text-decoration: none; }
+.ge a.chip-protocolo[href]:hover { border-color: var(--accent); color: var(--accent); }
+
+.ge #processoBusca .menu { right: 0; min-width: 0; max-width: none; max-height: 320px; overflow-y: auto; }
+.ge .processo-atual { display: flex; flex-direction: column; gap: 10px; }
+.ge .processo-atual .modelo-desc { margin: 0; }
+.ge .processo-protocolo {
+  flex: 1; min-width: 0; font-weight: 600; font-size: 13.5px; color: var(--accent);
+  text-decoration: none; overflow-wrap: anywhere;
+}
+.ge a.processo-protocolo[href]:hover { text-decoration: underline; }
+.ge .processo-relacionados { display: flex; flex-direction: column; gap: 10px; }
+.ge .processo-relacionados .ajuda { font-size: 11.5px; color: var(--muted); }
+.ge .processo-relacionados select:disabled { cursor: default; opacity: .75; }
+
+/* O menu do catálogo abre ancorado na linha de botões, não no botão: assim
+   cabe inteiro na coluna lateral, que corta o que passa da sua largura. */
+.ge .secao-props .botoes { position: relative; }
+.ge .secao-props .botoes .menu-wrap { position: static; }
+.ge .secao-props .botoes .menu { left: 0; right: 0; max-width: none; }
+
+/* =============================================================================
+   IDENTIDADE VISUAL DO SESJUR
+   As regras acima definem a estrutura da ferramenta; estas a vestem com os
+   componentes da aplicação: barra de seções em pílula, cartões, botões e
+   campos arredondados.
+   ============================================================================= */
+
+/* barra de seções — como .abas */
+.ge .topo {
+  gap: 10px; flex-wrap: wrap;
+  padding: 5px 16px 5px 5px;
+  border: 1px solid var(--line); border-radius: 22px; box-shadow: var(--sombra);
+}
+.ge .nav-principal { margin-left: 0; gap: 4px; }
+.ge .nav-principal a {
+  padding: var(--densidade-pill-y) 16px; border-radius: 99px; font-weight: 700;
+}
+.ge .nav-principal a:hover { background: var(--azul-050); color: var(--accent); }
+.ge .nav-principal a[aria-current="page"] { background: var(--accent); color: #fff; font-weight: 700; }
+
+.ge .segmentado { border-radius: 99px; background: var(--cinza-100); border-color: transparent; padding: 3px; }
+.ge .segmentado a, .ge .segmentado button { border-radius: 99px; font-weight: 700; }
+.ge .segmentado a.ativo, .ge .segmentado button.ativo { background: #fff; color: var(--accent); font-weight: 700; box-shadow: 0 1px 3px rgba(10, 22, 40, .14); }
+
+.ge .chip-protocolo { padding: 5px 12px; border-color: var(--line-forte); background: #fff; color: var(--muted); }
+.ge a.chip-protocolo[href]:hover { border-color: var(--acento-forte); color: var(--accent); }
+
+/* cartões — como .card */
+.ge .app { gap: var(--densidade-grade); position: relative; }
+.ge .lateral, .ge .trabalho, .ge .visao {
+  background: #fff; border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--sombra);
+}
+.ge .trabalho { overflow: hidden; }
+.ge .mesa { background: var(--cinza-050); }
+.ge .secao { padding: var(--densidade-painel); }
+.ge .secao > h2, .ge .sub-pagina, .ge .menu-titulo, .ge .conferencia summary { font-weight: 700; letter-spacing: .08em; color: var(--accent); }
+.ge .pagina-topo h2 { font-weight: 800; }
+
+/* botões — como .btn / .btn--primario / .btn--secundario / .btn--ghost */
+.ge .btn {
+  padding: var(--densidade-controle-y) var(--densidade-btn-x); border-radius: 99px;
+  border-color: var(--line-forte); background: #fff; color: var(--ink); font-weight: 700;
+}
+.ge .btn:hover:not(:disabled) { background: #fff; border-color: var(--acento-forte); color: var(--accent); }
+.ge .btn:disabled { opacity: .5; }
+.ge .btn-mini { padding: var(--densidade-btn-sm-y) 12px; font-size: 12px; }
+.ge .btn-principal, .ge .btn-principal:hover:not(:disabled) { background: var(--accent); border-color: var(--accent); color: #fff; }
+.ge .btn-fantasma { background: transparent; border-color: transparent; color: var(--muted); }
+.ge .btn-fantasma:hover:not(:disabled) { background: var(--cinza-100); border-color: transparent; color: var(--ink); }
+.ge .btn-perigo:hover:not(:disabled) { border-color: var(--danger); color: var(--danger); background: var(--danger-soft); }
+.ge .btn-perigo-cheio, .ge .btn-perigo-cheio:hover:not(:disabled) { background: var(--danger); border-color: var(--danger); color: #fff; }
+.ge .btn.ativo { background: var(--accent-soft); border-color: transparent; color: var(--accent); }
+.ge .btn-alerta, .ge .btn-alerta:hover:not(:disabled) { background: var(--warn-soft); border-color: transparent; color: var(--warn); border-radius: var(--raio-sm); }
+
+/* campos — como .input / .select / .textarea */
+.ge .campo > label, .ge .prop-cab > label { color: var(--muted); }
+.ge .campo input, .ge .campo textarea, .ge .campo select, .ge .busca {
+  padding: var(--densidade-controle-y) var(--densidade-controle-x);
+  border-radius: var(--raio-sm); background: #fff; font-size: 13.5px;
+}
+.ge .campo input:focus, .ge .campo textarea:focus, .ge .campo select:focus, .ge .busca:focus {
+  border-color: var(--azul-600); box-shadow: 0 0 0 3px rgba(76, 124, 242, .16);
+}
+.ge .campo-prop { border-radius: var(--raio-sm); background: var(--azul-050); padding: 12px; }
+.ge .sel-fer, .ge .grupo-fer { border-radius: var(--raio-sm); }
+.ge .btn-fer { border-radius: 7px; }
+.ge .btn-prop { border-radius: 7px; }
+.ge .tok-etiqueta, .ge code { font-family: var(--mono); }
+.ge .tok-etiqueta { border-radius: 6px; padding: 1px 6px; }
+.ge .modelo-desc { border-left-color: var(--acento); }
+
+/* menus, diálogos, avisos e toasts */
+.ge .menu { border-color: var(--line); border-radius: 14px; box-shadow: var(--sombra-md); padding: 6px; }
+.ge .menu button { border-radius: 9px; font-weight: 600; }
+.ge .menu-props button small { font-family: var(--mono); }
+.ge .dlg { border-color: var(--line); border-radius: 16px; box-shadow: var(--sombra-md); padding: 24px; font-family: var(--fonte); }
+.ge .dlg::backdrop { background: rgba(21, 34, 56, .5); }
+.ge .dlg h2 { font-size: 17px; font-weight: 800; }
+.ge .aviso { border-radius: var(--raio-sm); border-left: none; font-weight: 600; }
+.ge .aviso-info { color: var(--verde); background: var(--verde-claro); }
+.ge .selo { font-weight: 700; border-color: transparent; }
+.ge .selo-ready { background: var(--verde-claro); }
+.ge .toast { border-radius: 12px; background: var(--azul-900); color: #fff; font-weight: 600; box-shadow: var(--sombra-md); }
+.ge .conferencia, .ge .vazio-props { border-radius: var(--raio-sm); }
+
+/* A folha é o documento oficial: mantém a tipografia do expediente, não a da interface. */
+.ge .folha { border-radius: 4px; }
+.ge .folha hr.quebra-pagina::after { font-family: var(--fonte); }
+
+/* Impressão (PDF): só a folha. O app.css já esconde menu e botões; aqui some
+   o restante da moldura da aplicação. */
+@media print {
+  .conteudo:has(.ge) { height: auto; }
+  .conteudo:has(.ge) > .header, .main:has(.ge) > .alert { display: none !important; }
+  .main:has(.ge) { display: block; padding: 0; }
+  .ge { display: block; }
+  .ge .trabalho { border: none; border-radius: 0; box-shadow: none; overflow: visible; }
+  .ge .mesa { background: #fff; }
+}
