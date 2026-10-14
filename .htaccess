@@ -1,9 +1,9 @@
-# Raiz do projeto. Redireciona o acesso a /gestao-juridica/ para a pasta public/.
+# Raiz do projeto. Redireciona o acesso a /sesjur-processos/ para a pasta public/.
 Options -Indexes
 
 <IfModule mod_rewrite.c>
     RewriteEngine On
-    RewriteBase /gestao-juridica/
+    RewriteBase /sesjur-processos/
     # Acesso a raiz do projeto -> public/
     RewriteRule ^$ public/ [L,R=302]
 </IfModule>

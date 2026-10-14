@@ -23,7 +23,9 @@
     "http://localhost/*",
     "http://127.0.0.1/*",
     "http://10.15.22.20/*",
-    "http://10.15.120.216/*"
+    "http://10.15.120.216/*",
+    "http://sesjur.saude.mt.gov.br/*",
+    "https://sesjur.saude.mt.gov.br/*"
   ],
   "optional_host_permissions": [
     "https://*/*"
@@ -34,7 +36,9 @@
         "http://localhost/*",
         "http://127.0.0.1/*",
         "http://10.15.22.20/*",
-        "http://10.15.120.216/*"
+        "http://10.15.120.216/*",
+        "http://sesjur.saude.mt.gov.br/*",
+        "https://sesjur.saude.mt.gov.br/*"
       ],
       "js": [
         "content/app-bridge.js"

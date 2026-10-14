@@ -374,7 +374,7 @@ async function extrairPje(payload, abaApp) {
 
 const MENU_PAGINA  = 'gj-criar-pagina';
 const MENU_SELECAO = 'gj-criar-selecao';
-const APP_URL_PADRAO = 'http://localhost/gestao-juridica/public/';
+const APP_URL_PADRAO = 'http://sesjur.saude.mt.gov.br/sesjur-processos/public/';
 const PENDENTE_VALIDADE_MS = 5 * 60 * 1000;
 const SELECAO_MAX = 4000;
 
