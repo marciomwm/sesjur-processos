@@ -106,7 +106,7 @@ final class AcaoRepository
 
     /**
      * Acoes para o gerenciador de tarefas.
-     * @param array{busca?:string,status?:string,processo_id?:int|null,criado_por?:int|null,prazo?:string} $filtros
+     * @param array{busca?:string,status?:string,processo_id?:int|null,criado_por?:int|null,prazo?:string,prazo_de?:string,prazo_ate?:string} $filtros
      */
     public function listar(array $filtros, int $limite = self::LIMITE_QUADRO): array
     {
@@ -157,6 +157,16 @@ final class AcaoRepository
             case 'sem_prazo':
                 $condicoes[] = 'a.prazo IS NULL';
                 break;
+        }
+
+        // Intervalo de datas do prazo (calendario), de qualquer status.
+        if (!empty($filtros['prazo_de'])) {
+            $condicoes[] = 'a.prazo >= :prazo_de';
+            $params[':prazo_de'] = $filtros['prazo_de'];
+        }
+        if (!empty($filtros['prazo_ate'])) {
+            $condicoes[] = 'a.prazo <= :prazo_ate';
+            $params[':prazo_ate'] = $filtros['prazo_ate'];
         }
 
         $where = $condicoes === [] ? '' : ' WHERE ' . implode(' AND ', $condicoes);

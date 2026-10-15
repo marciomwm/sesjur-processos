@@ -15,8 +15,8 @@ $erro = static fn(string $campo): string => isset($erros[$campo]) ? 'is-invalido
     <section class="card">
         <div class="card__cabecalho">
             <div>
-                <h2 class="card__titulo">Ação</h2>
-                <p class="card__subtitulo">Tarefa vinculada a um processo administrativo. O prazo da ação, se for mais próximo, passa a valer como prazo do processo até ela ser finalizada.</p>
+                <h2 class="card__titulo">Tarefa</h2>
+                <p class="card__subtitulo">Vinculada a um processo administrativo. O prazo da tarefa, se for mais próximo, passa a valer como prazo do processo até ela ser finalizada.</p>
             </div>
         </div>
         <div class="card__corpo">

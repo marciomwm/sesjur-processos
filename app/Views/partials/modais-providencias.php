@@ -13,11 +13,11 @@ $autor = Auth::usuario();
 $modaisProvidencia = [
     'acao' => [
         'id'        => 'modalNovaAcao',
-        'titulo'    => 'Nova ação',
+        'titulo'    => 'Nova tarefa',
         'descricao' => 'Atividade que deverá ou poderá ser executada: elaborar manifestação, encaminhar o processo, revisar documentos…',
         'campos'    => 'campos-acao.php',
         'dados'     => ['status' => 'PENDENTE'],
-        'salvar'    => 'Salvar ação',
+        'salvar'    => 'Salvar tarefa',
     ],
     'solicitacao' => [
         'id'        => 'modalNovaSolicitacao',

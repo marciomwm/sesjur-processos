@@ -135,7 +135,7 @@ final class PesquisaService
                 null
             ),
             'acoes' => $this->grupo(
-                'Ações',
+                'Tarefas',
                 'processo_administrativo_acoes a JOIN processos_administrativos pa ON pa.id = a.processo_administrativo_id',
                 ['a.descricao', 'a.observacao'],
                 'a.id, a.descricao, a.status, a.prazo, pa.id AS processo_id, pa.protocolo',

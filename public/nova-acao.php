@@ -32,21 +32,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     ];
     try {
         $id = (new AcaoService())->criar($dados);
-        flash('sucesso', 'Ação cadastrada.');
+        flash('sucesso', 'Tarefa cadastrada.');
         redirecionar($retorno . '#acao-' . $id);
     } catch (ValidationException $e) {
         $erros = $e->erros() ?: ['_geral' => $e->getMessage()];
     } catch (Throwable $e) {
         $codigo = log_erro($e, 'acao.criar');
-        $erros['_geral'] = "Não foi possível salvar a ação (código {$codigo}).";
+        $erros['_geral'] = "Não foi possível salvar a tarefa (código {$codigo}).";
     }
 }
 
-$titulo      = 'Nova Ação';
+$titulo      = 'Nova Tarefa';
 $menuAtivo   = 'acoes';
-$breadcrumbs = ['Ações' => 'acoes.php', 'Nova' => null];
+$breadcrumbs = ['Tarefas' => 'acoes.php', 'Nova' => null];
 $scripts     = ['acoes.js'];
-$rotuloSalvar = 'Salvar ação';
+$rotuloSalvar = 'Salvar tarefa';
 
 require APP_ROOT . '/Views/layout/cabecalho.php';
 ?>

@@ -97,12 +97,12 @@ require APP_ROOT . '/Views/layout/cabecalho.php';
         <span class="indicador__nota">Processos sob seu acompanhamento</span>
     </article>
     <a class="indicador indicador--acoes" href="<?= e(url('acoes.php?status=abertas')) ?>">
-        <span class="indicador__rotulo">Ações em aberto</span>
+        <span class="indicador__rotulo">Tarefas em aberto</span>
         <span class="indicador__valor"><?= e((string)$acoesAbertas) ?></span>
-        <span class="indicador__nota">Gerenciador de ações</span>
+        <span class="indicador__nota">Gerenciador de tarefas</span>
     </a>
     <a class="indicador <?= $acoesVencidas > 0 ? 'indicador--alerta' : '' ?>" href="<?= e(url('acoes.php?prazo=vencidas')) ?>">
-        <span class="indicador__rotulo">Ações vencidas</span>
+        <span class="indicador__rotulo">Tarefas vencidas</span>
         <span class="indicador__valor"><?= e((string)$acoesVencidas) ?></span>
         <span class="indicador__nota">Em aberto com o prazo expirado</span>
     </a>

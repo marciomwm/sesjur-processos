@@ -1,8 +1,9 @@
 <?php
 /**
- * Tabela de Acoes da ficha do processo (o quadro do gerenciador usa
- * acao-item.php).
- * Variaveis: $acoes (AcaoRepository::listarPorProcesso), $retorno
+ * Tabela de Tarefas (Acoes) da ficha do processo e da visao em lista do
+ * gerenciador (o quadro usa acao-item.php).
+ * Variaveis: $acoes (AcaoRepository::listarPorProcesso/listar), $retorno,
+ *            $mostrarProcesso (bool, opcional: coluna do processo)
  *
  * Os botoes de alteracao so aparecem para quem pode alterar; a mesma regra
  * e aplicada no AcaoService. Cada linha mantem a ancora #acao-N.
@@ -16,6 +17,7 @@ use App\Services\AcaoService;
         <thead>
             <tr>
                 <th>Descrição</th>
+                <?php if (!empty($mostrarProcesso)): ?><th>Processo</th><?php endif; ?>
                 <th>Prazo</th>
                 <th>Status</th>
                 <th>Criada por</th>
@@ -41,6 +43,12 @@ use App\Services\AcaoService;
                         <br><span class="texto-secundario"><?= nl2br(e($acao['observacao'])) ?></span>
                     <?php endif; ?>
                 </td>
+                <?php if (!empty($mostrarProcesso)): ?>
+                    <td class="nowrap">
+                        <a class="mono" href="<?= e(url('processo-administrativo.php?id=' . $acao['processo_administrativo_id'])) ?>#acoes"
+                           title="<?= e(mb_substr((string)($acao['processo_objeto'] ?? ''), 0, 200)) ?>"><?= e($acao['protocolo']) ?></a>
+                    </td>
+                <?php endif; ?>
                 <td class="nowrap">
                     <?php if ($acao['prazo'] !== null): ?>
                         <span class="badge <?= e($finalizada ? 'badge--neutro' : Prazo::classeBadge($situacaoPrazo)) ?>"
@@ -75,11 +83,11 @@ use App\Services\AcaoService;
                             </form>
                             <a class="btn btn--ghost btn--sm" href="<?= e(url('editar-acao.php?id=' . $acao['id'] . '&retorno=' . rawurlencode($retorno))) ?>">Editar</a>
                             <form method="post" action="<?= e(url('excluir-acao.php')) ?>"
-                                  data-confirmar="Excluir a ação “<?= e(mb_substr($acao['descricao'], 0, 80)) ?>”? Esta operação não pode ser desfeita.">
+                                  data-confirmar="Excluir a tarefa “<?= e(mb_substr($acao['descricao'], 0, 80)) ?>”? Esta operação não pode ser desfeita.">
                                 <?= Csrf::campo() ?>
                                 <input type="hidden" name="id" value="<?= (int)$acao['id'] ?>">
                                 <input type="hidden" name="retorno" value="<?= e($retorno) ?>">
-                                <button type="submit" class="btn btn--ghost btn--sm acao__excluir" aria-label="Excluir ação">🗑</button>
+                                <button type="submit" class="btn btn--ghost btn--sm acao__excluir" aria-label="Excluir tarefa">🗑</button>
                             </form>
                         </div>
                     <?php else: ?>

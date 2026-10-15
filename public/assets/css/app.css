@@ -997,6 +997,46 @@ a.indicador:hover { box-shadow: var(--sombra-md); color: inherit; }
 .acao__comandos form { margin: 0; }
 .acao__transicoes { display: flex; gap: 6px; flex-wrap: wrap; }
 .acao__excluir { color: var(--vermelho); }
+/* Calendario de tarefas pelo prazo */
+.calendario__titulo::first-letter { text-transform: uppercase; }
+.calendario__grade {
+    display: grid; grid-template-columns: repeat(7, minmax(0, 1fr));
+    border: 1px solid var(--cinza-200); border-radius: var(--raio-sm); overflow: hidden; background: var(--cinza-200); gap: 1px;
+}
+.calendario__semana {
+    padding: 6px 8px; background: var(--cinza-100); text-align: center;
+    font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--cinza-500);
+}
+.calendario__dia { display: flex; flex-direction: column; gap: 3px; min-width: 0; min-height: 104px; padding: 5px; background: #fff; }
+.calendario__dia.is-fora { background: var(--cinza-100); }
+.calendario__dia.is-fora .calendario__numero { color: var(--cinza-500); font-weight: 500; }
+.calendario__numero { align-self: flex-end; min-width: 24px; padding: 0 6px; border-radius: 99px; text-align: center; font-size: 12px; font-weight: 700; line-height: 22px; }
+.calendario__dia.is-hoje .calendario__numero { background: var(--azul-700); color: #fff; }
+.calendario__data-extensa { display: none; }
+.calendario__tarefa {
+    display: block; padding: 3px 6px; border-radius: 6px; border-left: 3px solid var(--azul-700);
+    background: var(--azul-050); color: var(--cinza-900); font-size: 11.5px; line-height: 1.35; overflow-wrap: anywhere;
+}
+.calendario__tarefa:hover { box-shadow: var(--sombra); color: var(--cinza-900); }
+.calendario__hora { font-weight: 700; margin-right: 2px; }
+.calendario__tarefa--vencido { border-left-color: var(--vermelho); background: var(--vermelho-claro); }
+.calendario__tarefa--hoje, .calendario__tarefa--proximo { border-left-color: var(--ambar); background: var(--ambar-claro); }
+.calendario__tarefa--no_prazo { border-left-color: var(--verde); background: var(--verde-claro); }
+.calendario__tarefa--finalizada { border-left-color: var(--cinza-500); background: var(--cinza-100); color: var(--cinza-500); text-decoration: line-through; }
+.calendario__legenda { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 10px 0 0; font-size: 12px; }
+.calendario__marca { display: inline-block; width: 14px; height: 10px; padding: 0; margin-left: 6px; border-left-width: 3px; border-left-style: solid; border-radius: 3px; }
+.calendario__marca:first-child { margin-left: 0; }
+@media (max-width: 720px) {
+    /* No celular, a grade vira uma agenda: so os dias com tarefas. */
+    .calendario__grade { grid-template-columns: 1fr; }
+    .calendario__semana, .calendario__dia:not(.tem-tarefas) { display: none; }
+    .calendario__dia { min-height: 0; padding: 8px 10px; }
+    .calendario__numero { align-self: flex-start; padding: 0; text-align: left; }
+    .calendario__dia.is-hoje .calendario__numero { padding: 0 8px; }
+    .calendario__data-extensa { display: inline; }
+    .calendario__tarefa { font-size: 12.5px; padding: 6px 8px; }
+}
+
 .form-acao { max-width: 920px; }
 .form-acao__processo { margin: 0; display: flex; flex-direction: column; gap: 2px; }
 .form-acao__processo a { font-weight: 700; }

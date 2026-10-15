@@ -62,27 +62,27 @@ Classificação textual livre do tipo de trâmite de um Processo Administrativo
 Estado corrente do processo no SIGADOC, um entre um conjunto fechado de
 códigos: Aguardando Andamento, Sobrestado, Arquivado, Em Trânsito, Outra.
 
-**Ação** (Processo Administrativo):
-Tarefa interna ligada a um Processo Administrativo (um processo tem N ações),
+**Tarefa** (Processo Administrativo):
+Providência interna a executar, ligada a um Processo Administrativo (N por processo),
 com Descrição, Prazo, Status e Observação. Status: Pendente, Em andamento,
 Concluída ou Cancelada — as duas últimas são **finalizadas**. Qualquer Usuário
-cria uma Ação; só Administrador, Gestor ou quem a criou a altera ou exclui.
-_Avoid_: tarefa (o termo da tela é "ação"), atividade (reservado à Atividade do processo)
+cria uma Tarefa; só Administrador, Gestor ou quem a criou a altera ou exclui.
+_Avoid_: ação (nome antigo; o código, as rotas e o banco ainda usam `acao`), atividade (reservado à Atividade do processo)
 
 **Solicitação** (Processo Administrativo):
 Pedido enviado a outra unidade (uma Unidade Administrativa, o **destinatário**) por um
 **expediente** do SIGADOC, ligado a um Processo Administrativo (um processo
 tem N solicitações), com Data, Assunto, Prazo opcional e Status manual:
 Aguardando, Atendido ou Encerrado. **Vencida** é a que segue Aguardando depois
-do Prazo. Ao contrário da Ação, a Solicitação não afeta o Prazo vigente nem a
-Atividade do processo. Mesma regra de alteração da Ação: qualquer Usuário
+do Prazo. Ao contrário da Tarefa, a Solicitação não afeta o Prazo vigente nem a
+Atividade do processo. Mesma regra de alteração da Tarefa: qualquer Usuário
 cria; só Administrador, Gestor ou quem a criou altera ou exclui.
 _Avoid_: ofício, pedido, requisição
 
 **Anotação** (Processo Administrativo):
 Nota livre e interna da equipe sobre um Processo Administrativo (um processo
-tem N anotações), com autor e data. Mesma regra de alteração da Ação.
-_Avoid_: observação (campo da Ação), comentário; não confundir com o Evento
+tem N anotações), com autor e data. Mesma regra de alteração da Tarefa.
+_Avoid_: observação (campo da Tarefa), comentário; não confundir com o Evento
 do tipo "Anotação" importado do SIGADOC, que é histórico da fonte e não é
 editado no sistema
 
@@ -100,12 +100,12 @@ Variável do texto de um Expediente, escrita como `{{TOKEN}}`. As do
 Judiciais e Extrajudiciais vinculados; as demais são criadas pelo Usuário.
 
 **Providências**:
-Guia da ficha do Processo Administrativo que reúne Ações, Solicitações e
+Guia da ficha do Processo Administrativo que reúne Tarefas, Solicitações e
 Anotações — tudo o que a equipe registra e acompanha no sistema, em oposição
 ao que é espelhado da fonte (Eventos, na guia Movimentações).
 
 **Providência rápida**:
-Ação, Solicitação ou Anotação registrada pela barra "Registrar" da ficha, num
+Tarefa, Solicitação ou Anotação registrada pela barra "Registrar" da ficha, num
 modal, sem sair do processo. É a mesma entidade da página de cadastro; o
 processo, o autor, a data/hora e o tipo nunca são digitados.
 
@@ -138,12 +138,12 @@ de abertura + 30 dias.
 
 **Prazo vigente**:
 O prazo que vale para o Processo Administrativo: o mais próximo do vencimento
-entre o Prazo do próprio processo e os prazos das Ações ainda não
-finalizadas. Calculado pelo sistema a cada alteração do processo ou das ações.
+entre o Prazo do próprio processo e os prazos das Tarefas ainda não
+finalizadas. Calculado pelo sistema a cada alteração do processo ou das tarefas.
 
 **Atividade**:
 Indicador calculado do Processo Administrativo: **ativo** enquanto houver
-Ação não finalizada; **inativo** sem ações ou com todas finalizadas. Nunca é
+Tarefa não finalizada; **inativo** sem tarefas ou com todas finalizadas. Nunca é
 editado à mão.
 _Avoid_: status, situação (Situação é o estado no SIGADOC)
 

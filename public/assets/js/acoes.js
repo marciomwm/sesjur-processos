@@ -1,5 +1,5 @@
 /**
- * Formulário de Ação: sugere protocolos cadastrados enquanto se digita
+ * Formulário de Tarefa: sugere protocolos cadastrados enquanto se digita
  * (datalist alimentado pela mesma API do widget de vínculos).
  */
 (function () {

@@ -56,7 +56,7 @@ final class ExpedienteService
         'PA_LOTACAO'          => ['pa_lotacao', 'administrativo', 'Lotação (sigla)', 'texto', 'Sigla da lotação em que o processo se encontra.'],
         'PA_LOTACAO_NOME'     => ['pa_lotacao_nome', 'administrativo', 'Lotação (nome)', 'texto', 'Nome da lotação em que o processo se encontra.'],
         'PA_PRAZO'            => ['pa_prazo', 'administrativo', 'Prazo do processo', 'texto', 'Prazo próprio do processo.'],
-        'PA_PRAZO_VIGENTE'    => ['pa_prazo_vigente', 'administrativo', 'Prazo vigente', 'texto', 'O prazo mais próximo entre o do processo e o das ações em aberto.'],
+        'PA_PRAZO_VIGENTE'    => ['pa_prazo_vigente', 'administrativo', 'Prazo vigente', 'texto', 'O prazo mais próximo entre o do processo e o das tarefas em aberto.'],
         'PA_DESIGNADOS'       => ['pa_designados', 'administrativo', 'Designados', 'texto', 'Usuários designados para acompanhar o processo.'],
         'PA_PRIORIDADES'      => ['pa_prioridades', 'administrativo', 'Prioridades', 'texto', 'Prioridades atribuídas ao processo.'],
         'PA_PRODUTOS_SAUDE'   => ['pa_produtos_saude', 'administrativo', 'Produtos de Saúde', 'textarea', 'Produtos de saúde relacionados ao processo.'],

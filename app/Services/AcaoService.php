@@ -35,7 +35,7 @@ final class AcaoService
     public const DESCRICAO_MAX  = 500;
     public const OBSERVACAO_MAX = 5000;
 
-    public const MSG_SEM_PERMISSAO = 'Somente administradores, gestores ou quem criou a ação podem alterá-la.';
+    public const MSG_SEM_PERMISSAO = 'Somente administradores, gestores ou quem criou a tarefa podem alterá-la.';
 
     public function __construct(
         private readonly AcaoRepository $repo = new AcaoRepository(),
@@ -182,7 +182,7 @@ final class AcaoService
 
         $descricao = Normalizador::texto($entrada['descricao'] ?? null);
         if ($descricao === null) {
-            $erros['descricao'] = 'Descreva a ação.';
+            $erros['descricao'] = 'Descreva a tarefa.';
         } elseif (mb_strlen($descricao) > self::DESCRICAO_MAX) {
             $erros['descricao'] = 'A descrição deve ter no máximo ' . self::DESCRICAO_MAX . ' caracteres.';
         }
@@ -233,7 +233,7 @@ final class AcaoService
     {
         $acao = $this->repo->buscarPorId($id);
         if ($acao === null) {
-            throw new ValidationException([], 'Ação não encontrada.');
+            throw new ValidationException([], 'Tarefa não encontrada.');
         }
         if (!self::podeAlterar($acao)) {
             throw new AcessoNegadoException(self::MSG_SEM_PERMISSAO);

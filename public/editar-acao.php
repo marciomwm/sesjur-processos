@@ -13,7 +13,7 @@ use App\Services\AcaoService;
 $id = entrada_int('id');
 $acao = $id !== null ? (new AcaoRepository())->buscarPorId($id) : null;
 if ($acao === null) {
-    flash('erro', 'Ação não encontrada.');
+    flash('erro', 'Tarefa não encontrada.');
     redirecionar('acoes.php');
 }
 if (!AcaoService::podeAlterar($acao)) {
@@ -40,19 +40,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     ];
     try {
         (new AcaoService())->atualizar($id, $dados);
-        flash('sucesso', 'Ação atualizada.');
+        flash('sucesso', 'Tarefa atualizada.');
         redirecionar($retorno . '#acao-' . $id);
     } catch (ValidationException $e) {
         $erros = $e->erros() ?: ['_geral' => $e->getMessage()];
     } catch (Throwable $e) {
         $codigo = log_erro($e, 'acao.editar');
-        $erros['_geral'] = "Não foi possível salvar a ação (código {$codigo}).";
+        $erros['_geral'] = "Não foi possível salvar a tarefa (código {$codigo}).";
     }
 }
 
-$titulo      = 'Editar Ação';
+$titulo      = 'Editar Tarefa';
 $menuAtivo   = 'acoes';
-$breadcrumbs = ['Ações' => 'acoes.php', $acao['protocolo'] => 'processo-administrativo.php?id=' . $acao['processo_administrativo_id'], 'Editar ação' => null];
+$breadcrumbs = ['Tarefas' => 'acoes.php', $acao['protocolo'] => 'processo-administrativo.php?id=' . $acao['processo_administrativo_id'], 'Editar tarefa' => null];
 $rotuloSalvar = 'Salvar alterações';
 
 require APP_ROOT . '/Views/layout/cabecalho.php';

@@ -76,7 +76,7 @@ $valorAuditoria = static fn(string $campo, mixed $valor): string => match (true)
 };
 $historicoVazio = 'Nenhum registro no histórico. Providências, prioridades, produtos e vínculos extrajudiciais passam a aparecer aqui.';
 
-// Prazo vigente: o gravado, e a ação que o determina (se não for o prazo próprio).
+// Prazo vigente: o gravado, e a tarefa que o determina (se não for o prazo próprio).
 $vigente = Prazo::vigente($registro['prazo'], $registro['prazo_hora'], $acoesAbertas);
 $acaoDoPrazo = null;
 foreach ($acoesAbertas as $a) {
@@ -123,7 +123,7 @@ require APP_ROOT . '/Views/layout/cabecalho.php';
                 <span class="badge <?= e($classeSituacao) ?>"><?= e(Normalizador::SITUACOES[$situacao] ?? $situacao) ?></span>
             <?php endif; ?>
             <span class="badge <?= $ativo ? 'badge--verde' : 'badge--neutro' ?>"
-                  title="<?= $ativo ? 'Há ação em aberto' : 'Sem ações em aberto' ?>"><?= $ativo ? '● Ativo' : '○ Inativo' ?></span>
+                  title="<?= $ativo ? 'Há tarefa em aberto' : 'Sem tarefas em aberto' ?>"><?= $ativo ? '● Ativo' : '○ Inativo' ?></span>
             <?php if ($registro['prazo_vigente'] !== null): ?>
                 <span class="badge <?= e(Prazo::classeBadge($situacaoPrazo)) ?>" title="<?= e(Prazo::ROTULOS_SITUACAO[$situacaoPrazo] ?? '') ?>">
                     ⏱ Prazo <?= e(Prazo::formatar($registro['prazo_vigente'], $registro['prazo_vigente_hora'])) ?>
@@ -168,7 +168,7 @@ require APP_ROOT . '/Views/layout/cabecalho.php';
         <a class="abas__item" href="#informacoes" data-aba="informacoes">Informações</a>
         <a class="abas__item" href="#providencias" data-aba="providencias">
             Providências
-            <span class="abas__contador" title="Ações em aberto e solicitações aguardando resposta"><?= count($acoesAbertas) + $solicitacoesAguardando ?: '' ?></span>
+            <span class="abas__contador" title="Tarefas em aberto e solicitações aguardando resposta"><?= count($acoesAbertas) + $solicitacoesAguardando ?: '' ?></span>
         </a>
         <a class="abas__item" href="#judiciais" data-aba="judiciais" title="Processos Judiciais">
             Judiciais <span class="abas__contador"><?= count($relacionados) ?: '' ?></span>
@@ -192,8 +192,8 @@ require APP_ROOT . '/Views/layout/cabecalho.php';
 <?php // Sempre visiveis (barra flutuante), em qualquer guia. Sem JavaScript, os botoes levam as paginas de cadastro comuns (com retorno para a ficha). ?>
 <div class="acoes-rapidas" role="toolbar" aria-label="Providências rápidas">
     <span class="acoes-rapidas__rotulo" aria-hidden="true">Registrar</span>
-    <a class="btn btn--primario btn--sm" data-modal-abrir="modalNovaAcao" title="Registrar uma ação (tarefa) no processo"
-       href="<?= e(url('nova-acao.php?processo_id=' . $id . '&retorno=' . rawurlencode($retornoFicha))) ?>">＋ Nova Ação</a>
+    <a class="btn btn--primario btn--sm" data-modal-abrir="modalNovaAcao" title="Registrar uma tarefa no processo"
+       href="<?= e(url('nova-acao.php?processo_id=' . $id . '&retorno=' . rawurlencode($retornoFicha))) ?>">＋ Nova Tarefa</a>
     <a class="btn btn--secundario btn--sm" data-modal-abrir="modalNovaSolicitacao" title="Registrar uma solicitação a outra unidade"
        href="<?= e(url('nova-solicitacao.php?processo_id=' . $id . '&retorno=' . rawurlencode($retornoFicha))) ?>">＋ Nova Solicitação</a>
     <a class="btn btn--secundario btn--sm" data-modal-abrir="modalNovaAnotacao" title="Registrar uma anotação interna"
@@ -244,7 +244,7 @@ require APP_ROOT . '/Views/layout/cabecalho.php';
                         <span class="badge <?= e(Prazo::classeBadge($situacaoPrazo)) ?>"><?= e(Prazo::formatar($registro['prazo_vigente'], $registro['prazo_vigente_hora'])) ?></span>
                         <br><span class="texto-secundario">
                             <?php if ($acaoDoPrazo !== null): ?>
-                                Definido pela ação <a href="#acao-<?= (int)$acaoDoPrazo['id'] ?>">“<?= e(mb_strimwidth($acaoDoPrazo['descricao'], 0, 60, '…')) ?>”</a>, até ser finalizada
+                                Definido pela tarefa <a href="#acao-<?= (int)$acaoDoPrazo['id'] ?>">“<?= e(mb_strimwidth($acaoDoPrazo['descricao'], 0, 60, '…')) ?>”</a>, até ser finalizada
                             <?php else: ?>
                                 Prazo do próprio processo
                             <?php endif; ?>
@@ -258,8 +258,8 @@ require APP_ROOT . '/Views/layout/cabecalho.php';
                     <span class="badge <?= $ativo ? 'badge--verde' : 'badge--neutro' ?>"><?= $ativo ? 'Ativo' : 'Inativo' ?></span>
                     <br><span class="texto-secundario">
                         <?= $acoes === []
-                            ? 'Nenhuma ação cadastrada'
-                            : count($acoesAbertas) . ' de ' . count($acoes) . ' ação(ões) em aberto' ?>
+                            ? 'Nenhuma tarefa cadastrada'
+                            : count($acoesAbertas) . ' de ' . count($acoes) . ' tarefa(s) em aberto' ?>
                     </span>
                 </span>
             </div>
@@ -582,21 +582,21 @@ require APP_ROOT . '/Views/partials/designacao.php';
 <section class="card" id="acoes">
     <div class="card__cabecalho">
         <div>
-            <h2 class="card__titulo">Ações</h2>
+            <h2 class="card__titulo">Tarefas</h2>
             <p class="card__subtitulo">
-                Tarefas do processo · o prazo mais próximo entre as ações em aberto prevalece sobre o prazo do processo
+                O prazo mais próximo entre as tarefas em aberto prevalece sobre o prazo do processo
             </p>
         </div>
         <div class="acoes-linha">
             <?php if ($acoes !== []): ?>
                 <a class="btn btn--ghost btn--sm" href="<?= e(url('acoes.php?processo_id=' . $id)) ?>">Abrir no gerenciador</a>
             <?php endif; ?>
-            <a class="btn btn--primario btn--sm" data-modal-abrir="modalNovaAcao" href="<?= e(url('nova-acao.php?processo_id=' . $id . '&retorno=' . rawurlencode($retorno))) ?>">＋ Nova ação</a>
+            <a class="btn btn--primario btn--sm" data-modal-abrir="modalNovaAcao" href="<?= e(url('nova-acao.php?processo_id=' . $id . '&retorno=' . rawurlencode($retorno))) ?>">＋ Nova tarefa</a>
         </div>
     </div>
     <?php if ($acoes === []): ?>
         <div class="card__corpo">
-            <p class="texto-secundario mb-0">Nenhuma ação cadastrada. Sem ações, o processo fica inativo.</p>
+            <p class="texto-secundario mb-0">Nenhuma tarefa cadastrada. Sem tarefas, o processo fica inativo.</p>
         </div>
     <?php else: ?>
         <?php require APP_ROOT . '/Views/partials/acoes-tabela.php'; ?>

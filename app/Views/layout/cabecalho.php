@@ -60,7 +60,7 @@ $ehAdmin     = Auth::ehAdministrador();
                 <span class="sidebar__icone">🏛</span> Processos Extrajudiciais
             </a>
             <a class="sidebar__item <?= $menuAtivo === 'acoes' ? 'is-ativo' : '' ?>" href="<?= e(url('acoes.php')) ?>">
-                <span class="sidebar__icone">☑</span> Ações
+                <span class="sidebar__icone">☑</span> Tarefas
             </a>
             <a class="sidebar__item <?= $menuAtivo === 'solicitacoes' ? 'is-ativo' : '' ?>" href="<?= e(url('solicitacoes.php')) ?>">
                 <span class="sidebar__icone">✉</span> Solicitações
@@ -157,7 +157,7 @@ $ehAdmin     = Auth::ehAdministrador();
                     <span class="pesquisa-geral__icone" aria-hidden="true">⌕</span>
                     <input class="pesquisa-geral__campo" type="search" id="pesquisaGeral" name="q" autocomplete="off"
                            value="<?= e($menuAtivo === 'pesquisa' ? ($termoPesquisa ?? '') : '') ?>"
-                           placeholder="Pesquisar protocolo, CNJ, parte, ação…"
+                           placeholder="Pesquisar protocolo, CNJ, parte, tarefa…"
                            aria-autocomplete="list" aria-controls="pesquisaGeralSugestoes" aria-expanded="false">
                     <kbd class="pesquisa-geral__atalho" title="Atalho: tecla /">/</kbd>
                     <div class="pesquisa-geral__sugestoes" id="pesquisaGeralSugestoes" role="listbox" hidden></div>

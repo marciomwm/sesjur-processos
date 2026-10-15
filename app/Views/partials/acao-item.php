@@ -67,11 +67,11 @@ $transicoes = match ($acao['status']) {
             </form>
             <a class="btn btn--ghost btn--sm" href="<?= e(url('editar-acao.php?id=' . $acao['id'] . '&retorno=' . rawurlencode($retorno))) ?>">Editar</a>
             <form method="post" action="<?= e(url('excluir-acao.php')) ?>"
-                  data-confirmar="Excluir a ação “<?= e(mb_substr($acao['descricao'], 0, 80)) ?>”? Esta operação não pode ser desfeita.">
+                  data-confirmar="Excluir a tarefa “<?= e(mb_substr($acao['descricao'], 0, 80)) ?>”? Esta operação não pode ser desfeita.">
                 <?= Csrf::campo() ?>
                 <input type="hidden" name="id" value="<?= (int)$acao['id'] ?>">
                 <input type="hidden" name="retorno" value="<?= e($retorno) ?>">
-                <button type="submit" class="btn btn--ghost btn--sm acao__excluir" aria-label="Excluir ação">🗑</button>
+                <button type="submit" class="btn btn--ghost btn--sm acao__excluir" aria-label="Excluir tarefa">🗑</button>
             </form>
         </div>
     <?php endif; ?>

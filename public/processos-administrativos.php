@@ -92,7 +92,7 @@ require APP_ROOT . '/Views/layout/cabecalho.php';
                 <label class="campo__rotulo" for="atividade">Atividade</label>
                 <select class="select" id="atividade" name="atividade">
                     <option value="">Todos</option>
-                    <option value="ativos" <?= $filtros['atividade'] === 'ativos' ? 'selected' : '' ?>>Ativos (com ação em aberto)</option>
+                    <option value="ativos" <?= $filtros['atividade'] === 'ativos' ? 'selected' : '' ?>>Ativos (com tarefa em aberto)</option>
                     <option value="inativos" <?= $filtros['atividade'] === 'inativos' ? 'selected' : '' ?>>Inativos</option>
                 </select>
             </div>
@@ -150,7 +150,7 @@ require APP_ROOT . '/Views/layout/cabecalho.php';
                     </td>
                     <td class="nowrap">
                         <?php if ((int)$p['ativo'] === 1): ?>
-                            <a class="badge badge--verde" href="<?= e(url('acoes.php?status=abertas&processo_id=' . $p['id'])) ?>" title="Ver as ações em aberto">● Ativo · <?= (int)$p['acoes_abertas'] ?></a>
+                            <a class="badge badge--verde" href="<?= e(url('acoes.php?status=abertas&processo_id=' . $p['id'])) ?>" title="Ver as tarefas em aberto">● Ativo · <?= (int)$p['acoes_abertas'] ?></a>
                         <?php else: ?>
                             <span class="badge badge--neutro">○ Inativo</span>
                         <?php endif; ?>

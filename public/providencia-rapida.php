@@ -46,7 +46,7 @@ try {
                 'status'      => entrada('status'),
                 'observacao'  => entrada('observacao'),
             ]);
-            responder_formulario(true, 'Ação cadastrada.', $ficha . '#acao-' . $id);
+            responder_formulario(true, 'Tarefa cadastrada.', $ficha . '#acao-' . $id);
         case 'solicitacao':
             $id = (new SolicitacaoService())->criar([
                 'processo_id'             => (string)$processoId,
