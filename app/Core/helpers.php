@@ -404,6 +404,32 @@ function densidade_interface(?string $valor = null): string
     return $valor === 'comfortable' ? 'comfortable' : 'compact';
 }
 
+/** Campos do formulario de Intimacao Pessoal (cadastro e edicao). */
+function entrada_intimacao(): array
+{
+    $dados = [];
+    foreach (['processo_tipo', 'processo_id', 'agente_intimado_id', 'agente_recebedor_id', 'data_recebimento', 'data_prazo',
+              'data_cumprimento', 'status', 'documento_referencia', 'confirmar_duplicidade'] as $campo) {
+        $dados[$campo] = entrada($campo);
+    }
+    // Sem entrada(): o trim por linha fica com o servico.
+    foreach (['observacoes', 'justificativa'] as $campo) {
+        $dados[$campo] = is_string($_POST[$campo] ?? null) ? $_POST[$campo] : '';
+    }
+    return $dados;
+}
+
+/**
+ * Para onde voltar depois de gravar ou excluir uma Intimacao Pessoal: uma
+ * pagina interna ("pagina.php?query", sem redirecionamento aberto) ou, sem
+ * retorno valido, a listagem de intimacoes.
+ */
+function destino_intimacao(string $retorno, string $ancora = ''): string
+{
+    $seguro = \App\Core\Auth::retornoSeguro($retorno);
+    return ($seguro === $retorno ? $seguro : 'intimacoes-pessoais.php') . $ancora;
+}
+
 /**
  * Para onde voltar depois de gravar um lancamento de bloqueio ou uma guia de
  * deposito: o painel ou a ficha do processo. Lista fechada, nunca uma URL

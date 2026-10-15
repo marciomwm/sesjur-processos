@@ -11,6 +11,7 @@ use App\Repositories\AnotacaoRepository;
 use App\Repositories\AuditoriaRepository;
 use App\Repositories\DesignacaoRepository;
 use App\Repositories\EventoAdministrativoRepository;
+use App\Repositories\IntimacaoPessoalRepository;
 use App\Repositories\LotacaoRepository;
 use App\Repositories\PrioridadeRepository;
 use App\Repositories\ProcessoAdministrativoRepository;
@@ -20,6 +21,7 @@ use App\Repositories\VinculoExtrajudicialRepository;
 use App\Repositories\VinculoRepository;
 use App\Services\AcaoService;
 use App\Services\ConfiguracaoService;
+use App\Services\IntimacaoPessoalService;
 use App\Services\PrioridadeService;
 use App\Services\ProcessoExtrajudicialService;
 use App\Services\ProdutoSaudeService;
@@ -102,10 +104,13 @@ if (!empty($registro['url_origem'])) {
     $urlSigadoc = $check['ok'] ? $check['url'] : null;
 }
 
+$intimacoes = IntimacaoPessoalService::podeAcessar() ? (new IntimacaoPessoalRepository())->listarPorProcesso('ADMINISTRATIVO', $id) : null;
+$retornoIntimacao = 'processo-administrativo.php?id=' . $id;
+
 $titulo      = 'Processo Administrativo';
 $menuAtivo   = 'pa-lista';
 $breadcrumbs = ['Processos Administrativos' => 'processos-administrativos.php', $registro['protocolo'] => null];
-$scripts     = ['abas.js', 'modal.js', 'produtos-saude.js'];
+$scripts     = ['abas.js', 'modal.js', 'produtos-saude.js', 'intimacoes.js'];
 $retornoFicha = 'processo-administrativo.php?id=' . $id;
 
 require APP_ROOT . '/Views/layout/cabecalho.php';
@@ -176,6 +181,11 @@ require APP_ROOT . '/Views/layout/cabecalho.php';
         <a class="abas__item" href="#extrajudiciais" data-aba="extrajudiciais" title="Processos Extrajudiciais">
             Extrajudiciais <span class="abas__contador"><?= count($extrajudiciais) ?: '' ?></span>
         </a>
+        <?php if ($intimacoes !== null): ?>
+        <a class="abas__item" href="#intimacoes" data-aba="intimacoes" title="Intimações Pessoais">
+            Intimações <span class="abas__contador"><?= count($intimacoes) ?: '' ?></span>
+        </a>
+        <?php endif; ?>
         <a class="abas__item" href="#produtos-saude" data-aba="produtos-saude">
             Produtos de Saúde <span class="abas__contador"><?= count($produtos) ?: '' ?></span>
         </a>
@@ -646,6 +656,16 @@ require APP_ROOT . '/Views/partials/designacao.php';
 </section>
 </div>
 
+<?php if ($intimacoes !== null): ?>
+<div class="abas__painel" id="intimacoes" data-aba-painel>
+<?php
+$processoTipo = 'ADMINISTRATIVO';
+$processoId = $id;
+require APP_ROOT . '/Views/partials/intimacoes-processo.php';
+?>
+</div>
+<?php endif; ?>
+
 <div class="abas__painel" id="historico" data-aba-painel>
 <section class="card">
     <div class="card__cabecalho">
@@ -662,6 +682,9 @@ require APP_ROOT . '/Views/partials/designacao.php';
 // Modais por ultimo: redefinem $dados/$erros no escopo da pagina.
 require APP_ROOT . '/Views/partials/modais-providencias.php';
 require APP_ROOT . '/Views/partials/modal-produto-saude.php';
+if ($intimacoes !== null) {
+    require APP_ROOT . '/Views/partials/modais-intimacao.php';
+}
 ?>
 
 <?php require APP_ROOT . '/Views/layout/rodape.php'; ?>

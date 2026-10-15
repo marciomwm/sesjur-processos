@@ -85,6 +85,9 @@ final class AuditoriaService
         'GUIA_DEPOSITO_CRIADA'       => 'Guia de depósito registrada',
         'GUIA_DEPOSITO_EDITADA'      => 'Guia de depósito alterada',
         'GUIA_DEPOSITO_EXCLUIDA'     => 'Guia de depósito excluída',
+        'INTIMACAO_CRIADA'           => 'Intimação registrada',
+        'INTIMACAO_EDITADA'          => 'Intimação alterada',
+        'INTIMACAO_EXCLUIDA'         => 'Intimação excluída',
     ];
 
     /** Rotulo de exibicao de qualquer acao (USUARIO_EDITADO, LOTACAO_INATIVADA...). */

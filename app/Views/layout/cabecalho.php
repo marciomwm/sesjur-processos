@@ -59,6 +59,11 @@ $ehAdmin     = Auth::ehAdministrador();
             <a class="sidebar__item <?= $menuAtivo === 'pe-lista' ? 'is-ativo' : '' ?>" href="<?= e(url('processos-extrajudiciais.php')) ?>">
                 <span class="sidebar__icone">🏛</span> Processos Extrajudiciais
             </a>
+            <?php if (App\Services\IntimacaoPessoalService::podeAcessar()): ?>
+            <a class="sidebar__item <?= $menuAtivo === 'intimacoes' ? 'is-ativo' : '' ?>" href="<?= e(url('intimacoes-pessoais.php')) ?>">
+                <span class="sidebar__icone">📨</span> Intimações Pessoais
+            </a>
+            <?php endif; ?>
             <a class="sidebar__item <?= $menuAtivo === 'acoes' ? 'is-ativo' : '' ?>" href="<?= e(url('acoes.php')) ?>">
                 <span class="sidebar__icone">☑</span> Tarefas
             </a>

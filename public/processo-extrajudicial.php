@@ -5,8 +5,10 @@ require_once __DIR__ . '/../app/bootstrap.php';
 
 use App\Core\Csrf;
 use App\Repositories\AuditoriaRepository;
+use App\Repositories\IntimacaoPessoalRepository;
 use App\Repositories\ProcessoExtrajudicialRepository;
 use App\Repositories\VinculoExtrajudicialRepository;
+use App\Services\IntimacaoPessoalService;
 use App\Services\ProcessoExtrajudicialService;
 
 $id = entrada_int('id');
@@ -31,10 +33,13 @@ $valorAuditoria = static fn(string $campo, mixed $valor): string => match (true)
     default                          => mb_strimwidth((string)$valor, 0, 120, '…'),
 };
 $situacao = $registro['situacao'];
+$intimacoes = IntimacaoPessoalService::podeAcessar() ? (new IntimacaoPessoalRepository())->listarPorProcesso('EXTRAJUDICIAL', $id) : null;
+$retornoIntimacao = 'processo-extrajudicial.php?id=' . $id;
 
 $titulo      = 'Processo Extrajudicial';
 $menuAtivo   = 'pe-lista';
 $breadcrumbs = ['Processos Extrajudiciais' => 'processos-extrajudiciais.php', $registro['protocolo'] => null];
+$scripts     = ['modal.js', 'intimacoes.js'];
 
 require APP_ROOT . '/Views/layout/cabecalho.php';
 ?>
@@ -116,9 +121,19 @@ require APP_ROOT . '/Views/layout/cabecalho.php';
     </div>
 </section>
 
+<?php
+if ($intimacoes !== null) {
+    $processoTipo = 'EXTRAJUDICIAL';
+    $processoId = $id;
+    require APP_ROOT . '/Views/partials/intimacoes-processo.php';
+}
+?>
+
 <section class="card">
     <div class="card__cabecalho"><h2 class="card__titulo">Histórico de alterações</h2></div>
     <?php require APP_ROOT . '/Views/partials/historico-auditoria.php'; ?>
 </section>
+
+<?php if ($intimacoes !== null) { require APP_ROOT . '/Views/partials/modais-intimacao.php'; } ?>
 
 <?php require APP_ROOT . '/Views/layout/rodape.php'; ?>

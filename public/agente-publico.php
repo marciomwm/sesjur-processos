@@ -10,6 +10,7 @@ use App\Core\Perfil;
 use App\Repositories\AgentePublicoRepository;
 use App\Repositories\AuditoriaRepository;
 use App\Repositories\CargoRepository;
+use App\Repositories\IntimacaoPessoalRepository;
 use App\Repositories\LotacaoRepository;
 use App\Services\AgentePublicoService;
 use App\Validators\CpfValidator;
@@ -52,6 +53,7 @@ $pendenciasUsuario = array_filter([
 $titulo      = 'Agente Público';
 $menuAtivo   = 'agentes';
 $breadcrumbs = ['Sistema' => null, 'Agentes Públicos' => 'agentes-publicos.php', $registro['nome'] => null];
+$scripts     = ['modal.js', 'intimacoes.js'];
 
 require APP_ROOT . '/Views/layout/cabecalho.php';
 ?>
@@ -155,9 +157,40 @@ require APP_ROOT . '/Views/layout/cabecalho.php';
     </div>
 </section>
 
+<?php
+$comoIntimado = (new IntimacaoPessoalRepository())->listarPorAgente($id, 'intimado');
+$comoRecebedor = (new IntimacaoPessoalRepository())->listarPorAgente($id, 'recebedor');
+$retornoIntimacao = 'agente-publico.php?id=' . $id;
+$mostrarProcesso = true;
+?>
+<section class="card" id="intimacoes">
+    <div class="card__cabecalho">
+        <div>
+            <h2 class="card__titulo">Intimações</h2>
+            <p class="card__subtitulo"><?= count($comoIntimado) ?> como pessoa intimada · <?= count($comoRecebedor) ?> como responsável pelo recebimento ·
+                <a href="<?= e(url('intimacoes-pessoais.php?agente_id=' . $id)) ?>">ver no painel</a></p>
+        </div>
+        <a class="btn btn--primario btn--sm" href="<?= e(url('nova-intimacao.php?' . http_build_query(['agente_intimado_id' => $id, 'retorno' => $retornoIntimacao]))) ?>">＋ Nova intimação</a>
+    </div>
+    <h3 class="subtitulo-secao">Como pessoa intimada</h3>
+    <?php
+    $intimacoes = $comoIntimado;
+    $vazioIntimacoes = 'Este agente não figura como pessoa intimada em nenhuma intimação.';
+    require APP_ROOT . '/Views/partials/tabela-intimacoes.php';
+    ?>
+    <h3 class="subtitulo-secao">Como responsável pelo recebimento</h3>
+    <?php
+    $intimacoes = $comoRecebedor;
+    $vazioIntimacoes = 'Este agente não recebeu nenhuma intimação registrada.';
+    require APP_ROOT . '/Views/partials/tabela-intimacoes.php';
+    ?>
+</section>
+
 <section class="card">
     <div class="card__cabecalho"><h2 class="card__titulo">Histórico de alterações</h2></div>
     <?php require APP_ROOT . '/Views/partials/historico-auditoria.php'; ?>
 </section>
+
+<?php require APP_ROOT . '/Views/partials/modais-intimacao.php'; ?>
 
 <?php require APP_ROOT . '/Views/layout/rodape.php'; ?>

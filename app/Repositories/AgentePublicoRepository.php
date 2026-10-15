@@ -178,6 +178,30 @@ final class AgentePublicoRepository
         return new Paginacao($stmt->fetchAll(), $total, $pagina, $porPagina);
     }
 
+    /**
+     * Autocomplete por nome, nome social ou matricula: so os dados de
+     * identificacao funcional (nada de CPF, e-mail ou telefone).
+     */
+    public function pesquisar(string $termo, int $limite = 10): array
+    {
+        $like = '%' . addcslashes($termo, '%_\\') . '%';
+        $stmt = $this->db->prepare(
+            'SELECT a.id, a.nome, a.nome_social, a.matricula, a.situacao, c.nome AS cargo, l.nome AS lotacao
+               FROM agentes_publicos a
+               JOIN lotacoes l ON l.id = a.lotacao_id
+               LEFT JOIN cargos c ON c.id = a.cargo_id
+              WHERE a.nome LIKE :b1 OR a.nome_social LIKE :b2 OR a.matricula LIKE :b3
+              ORDER BY a.situacao = \'DESLIGADO\', a.nome, a.id
+              LIMIT :limite'
+        );
+        $stmt->bindValue(':b1', $like);
+        $stmt->bindValue(':b2', $like);
+        $stmt->bindValue(':b3', addcslashes(mb_strtoupper($termo), '%_\\') . '%');
+        $stmt->bindValue(':limite', $limite, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetchAll();
+    }
+
     /** Agentes que ainda podem receber usuario (sem conta e nao desligados). */
     public function semUsuario(): array
     {

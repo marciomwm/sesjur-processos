@@ -213,6 +213,36 @@ _Avoid_: boleto, DJE
 Um Processo Judicial com lançamentos ou guias não pode ser excluído: os
 registros financeiros nunca somem em cascata.
 
+## Intimações pessoais
+
+**Intimação Pessoal**:
+Intimação dirigida a um Agente Público (a **pessoa intimada**) num processo já
+cadastrado — judicial, extrajudicial ou administrativo, sempre exatamente um,
+por chave estrangeira. Registra quem a **recebeu** (outro Agente Público, que
+pode ser a própria pessoa intimada), a data do recebimento, a **data do
+prazo** (data-limite informada; o sistema não calcula prazos processuais) e,
+quando cumprida, a **data do cumprimento** (a da providência, não a do
+registro). Quem registrou no sistema fica à parte, na autoria. Um processo e
+um agente podem ter várias intimações; a mesma combinação de processo,
+intimado, recebimento e prazo só é gravada com confirmação (possível
+duplicidade). Retificar o prazo exige justificativa. Restritas aos Perfis
+Administrador e Gestor: só eles veem o painel e as intimações (inclusive nas
+fichas dos processos), registram, alteram, registram o cumprimento ou
+excluem — exclusão lógica, com motivo, preservando o histórico.
+Um processo com intimações (mesmo excluídas) não pode ser excluído.
+_Avoid_: notificação, citação, comunicação
+
+**Status** (Intimação Pessoal):
+Estado operacional informado pelo Usuário: Pendente, Em andamento, Cumprida
+(exige a data do cumprimento) ou Cancelada.
+
+**Situação do prazo** (Intimação Pessoal):
+Calculada, nunca gravada nem confundida com o Status: **Dentro do prazo**,
+**Próxima do vencimento** (prazo em até 3 dias, inclusive hoje), **Vencida**
+(prazo passado, ainda Pendente ou Em andamento), **Cumprida no prazo** ou
+**Cumprida fora do prazo** (cumprimento depois do prazo). A Cancelada não tem
+situação.
+
 ## Extração assistida
 
 **Extração**:

@@ -126,6 +126,7 @@ final class ProcessoExtrajudicialService
         if ($atual === null) {
             throw new ValidationException([], 'Processo extrajudicial não encontrado.');
         }
+        IntimacaoPessoalService::exigirProcessoSemIntimacoes('EXTRAJUDICIAL', $id);
         Database::transacao(function () use ($id, $atual): void {
             foreach ($this->vinculos->idsAdministrativos($id) as $paId) {
                 $this->auditoria->registrar(

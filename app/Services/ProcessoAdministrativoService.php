@@ -164,6 +164,7 @@ final class ProcessoAdministrativoService
         if ($existente === null) {
             throw new ValidationException([], 'Processo administrativo não encontrado.');
         }
+        IntimacaoPessoalService::exigirProcessoSemIntimacoes('ADMINISTRATIVO', $id);
         Database::transacao(fn() => $this->repo->excluir($id));
     }
 

@@ -213,6 +213,7 @@ final class ProcessoJudicialService
             throw new ValidationException([], "O processo tem {$lancamentos} lançamento(s) de bloqueio e {$guias} guia(s) de depósito"
                 . ' registrados. Exclua-os antes, se o processo realmente deve sair do sistema.');
         }
+        IntimacaoPessoalService::exigirProcessoSemIntimacoes('JUDICIAL', $id);
         Database::transacao(fn() => $this->repo->excluir($id));
     }
 

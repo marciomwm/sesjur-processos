@@ -8,10 +8,12 @@ use App\Repositories\AssuntoProcessualRepository;
 use App\Repositories\BloqueioJudicialRepository;
 use App\Repositories\DocumentoJudicialRepository;
 use App\Repositories\GuiaDepositoRepository;
+use App\Repositories\IntimacaoPessoalRepository;
 use App\Repositories\MovimentacaoJudicialRepository;
 use App\Repositories\ParteProcessualRepository;
 use App\Repositories\ProcessoJudicialRepository;
 use App\Repositories\VinculoRepository;
+use App\Services\IntimacaoPessoalService;
 
 $id = entrada_int('id');
 if ($id === null) {
@@ -33,6 +35,8 @@ $documentos    = (new DocumentoJudicialRepository())->listarPorProcesso($id);
 $documentosPorMovimentacao = agrupar_por_movimentacao($documentos);
 $lancamentos   = (new BloqueioJudicialRepository())->listarPorProcesso($id);
 $guias         = (new GuiaDepositoRepository())->listarPorProcesso($id);
+$intimacoes    = IntimacaoPessoalService::podeAcessar() ? (new IntimacaoPessoalRepository())->listarPorProcesso('JUDICIAL', $id) : null;
+$retornoIntimacao = 'processo-judicial.php?id=' . $id;
 
 $polos = ['ATIVO' => 'Polo ativo', 'PASSIVO' => 'Polo passivo', 'TERCEIRO' => 'Outros interessados', 'OUTRO' => 'Outros'];
 
@@ -45,7 +49,7 @@ $sinalizador = static fn(mixed $valor): string => $valor === null ? 'Não inform
 $titulo      = 'Processo Judicial';
 $menuAtivo   = 'pj-lista';
 $breadcrumbs = ['Processos Judiciais' => 'processos-judiciais.php', $registro['numero_cnj'] => null];
-$scripts     = ['modal.js', 'bloqueios.js'];
+$scripts     = ['modal.js', 'bloqueios.js', 'intimacoes.js'];
 
 require APP_ROOT . '/Views/layout/cabecalho.php';
 ?>
@@ -141,6 +145,14 @@ require APP_ROOT . '/Views/layout/cabecalho.php';
 </div>
 
 <?php require APP_ROOT . '/Views/partials/bloqueios-processo.php'; ?>
+
+<?php
+if ($intimacoes !== null) {
+    $processoTipo = 'JUDICIAL';
+    $processoId = $id;
+    require APP_ROOT . '/Views/partials/intimacoes-processo.php';
+}
+?>
 
 <section class="card">
     <div class="card__cabecalho"><h2 class="card__titulo">Assuntos</h2></div>
@@ -314,6 +326,9 @@ require APP_ROOT . '/Views/layout/cabecalho.php';
 $processoFixo = $registro;
 $retorno = 'processo';
 require APP_ROOT . '/Views/partials/modais-bloqueios.php';
+if ($intimacoes !== null) {
+    require APP_ROOT . '/Views/partials/modais-intimacao.php';
+}
 ?>
 
 <?php require APP_ROOT . '/Views/layout/rodape.php'; ?>
