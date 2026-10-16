@@ -99,6 +99,15 @@ Variável do texto de um Expediente, escrita como `{{TOKEN}}`. As do
 **catálogo** são atributos do Processo Administrativo e dos Processos
 Judiciais e Extrajudiciais vinculados; as demais são criadas pelo Usuário.
 
+**Modelo** (Expediente):
+Ponto de partida de um Expediente — texto, formatação e Propriedades —,
+gravado no sistema. Qualquer Usuário cria os seus. **Individual** (padrão):
+só quem o criou vê e usa. **Compartilhado**: todos os Usuários veem e usam;
+só Administrador ou Gestor o cria, altera, exclui ou muda a visibilidade — os
+demais podem duplicá-lo (a cópia é Individual). Favorito e contagem de uso
+são de cada Usuário.
+_Avoid_: template, modelo público
+
 **Providências**:
 Guia da ficha do Processo Administrativo que reúne Tarefas, Solicitações e
 Anotações — tudo o que a equipe registra e acompanha no sistema, em oposição

@@ -6,7 +6,9 @@
    aplicação e o processo com que o gerador foi aberto. Este arquivo é o
    primeiro a carregar: templates.js monta o catálogo a partir dele.
 
-   SESJUR_EXPEDIENTE = { catalogo, grupos, baseUrl, apiUrl, processoId }
+   SESJUR_EXPEDIENTE = { catalogo, grupos, baseUrl, apiUrl, processoId,
+                         modelos, podeCompartilhar, csrf }
+   `modelos` são os modelos que o usuário vê: os dele e os compartilhados.
    ============================================================================= */
 (function (global) {
   'use strict';

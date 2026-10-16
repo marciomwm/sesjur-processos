@@ -41,7 +41,10 @@
   }
 
   /* edicoes = [{ original, nome }] — `original` nulo é tipo novo; tipos ausentes
-     da lista foram excluídos, e seus modelos passam para "Outro". */
+     da lista foram excluídos, e seus modelos passam para "Outro". Só os
+     modelos que o usuário pode alterar mudam de tipo: um compartilhado, para
+     quem não é Administrador nem Gestor, mantém o seu.
+     Devolve Promise de { ok, falhas } (falhas = modelos não regravados). */
   function salvarTipos(edicoes) {
     var nomes = [], visto = {};
     edicoes.forEach(function (e) {
@@ -55,14 +58,22 @@
     var destino = {};
     edicoes.forEach(function (e) { if (e.original) destino[e.original] = String(e.nome || '').trim(); });
 
+    var gravacoes = [];
     salvos().forEach(function (m) {
+      if (!m.podeAlterar) return;
       var novo = Object.prototype.hasOwnProperty.call(destino, m.tipo) ? destino[m.tipo] : null;
       if (!novo || nomes.indexOf(novo) === -1) novo = nomes.indexOf(m.tipo) !== -1 ? m.tipo : TIPO_PADRAO;
-      if (novo !== m.tipo) T.atualizarModelo(m.id, { tipo: novo });
+      if (novo !== m.tipo) gravacoes.push(T.atualizarModelo(m.id, { tipo: novo }));
     });
 
-    try { localStorage.setItem(CHAVE_TIPOS, JSON.stringify(nomes)); return true; }
-    catch (e) { return false; }
+    var gravouLista = true;
+    try { localStorage.setItem(CHAVE_TIPOS, JSON.stringify(nomes)); }
+    catch (e) { gravouLista = false; }
+
+    return Promise.all(gravacoes).then(function (resultados) {
+      var falhas = resultados.filter(function (r) { return !r.ok; }).length;
+      return { ok: gravouLista && !falhas, falhas: falhas };
+    });
   }
 
   /* ============================================================== SELETOR */
@@ -71,7 +82,7 @@
     var lista = [{ titulo: null, modelos: [{ id: ID_EM_BRANCO, nome: T.MODELOS[ID_EM_BRANCO].nome }] }];
     var porTipo = {};
     salvos().forEach(function (m) {
-      (porTipo[m.tipo] = porTipo[m.tipo] || []).push({ id: m.id, nome: m.nome });
+      (porTipo[m.tipo] = porTipo[m.tipo] || []).push({ id: m.id, nome: m.nome + (m.compartilhado ? ' (compartilhado)' : '') });
     });
     tipos().forEach(function (tipo) {
       if (porTipo[tipo]) lista.push({ titulo: tipo, modelos: porTipo[tipo] });
@@ -115,9 +126,26 @@
     };
   }
 
-  /* ================================================================= CRUD */
+  /* ========================================================= VISIBILIDADE
+     Todo usuário cria modelos INDIVIDUAIS (só ele vê). Administrador e Gestor
+     também podem torná-los COMPARTILHADOS (todos veem e usam). */
+  var INDIVIDUAL = 'INDIVIDUAL', COMPARTILHADO = 'COMPARTILHADO';
+  var VISIBILIDADES = [
+    { valor: INDIVIDUAL, label: 'Individual — só eu vejo e uso' },
+    { valor: COMPARTILHADO, label: 'Compartilhado — todos os usuários veem e usam' }
+  ];
+  var podeCompartilhar = !!(global.SESJUR_EXPEDIENTE || {}).podeCompartilhar;
+
+  /* Campo "Visibilidade" dos diálogos de modelo; só para quem pode compartilhar. */
+  function campoVisibilidade(m) {
+    if (!podeCompartilhar) return null;
+    return { id: 'visibilidade', label: 'Visibilidade', valor: m ? m.visibilidade : INDIVIDUAL, opcoes: VISIBILIDADES };
+  }
+
+  /* ================================================================= CRUD
+     Gravam no SESJUR: devolvem Promise de { ok, id } ou { ok: false, erro }. */
   /* dados = { titulo, tipo, descricao, baseId, conteudo, definicoes, selecao,
-               formato, assunto } */
+               formato, assunto, visibilidade } */
   function salvarComo(dados) {
     var base = obter(dados.baseId);
     return T.salvarModelo(
@@ -128,10 +156,12 @@
       dados.assunto,
       dados.descricao,
       dados.selecao || [],
-      { tipo: dados.tipo, formato: dados.formato }
+      { tipo: dados.tipo, formato: dados.formato,
+        visibilidade: podeCompartilhar && dados.visibilidade === COMPARTILHADO ? COMPARTILHADO : INDIVIDUAL }
     );
   }
 
+  /* Sem `visibilidade` em dados, o modelo mantém a que tem. */
   function atualizar(id, dados) {
     return T.atualizarModelo(id, {
       nome: dados.titulo,
@@ -140,7 +170,8 @@
       html: dados.conteudo,
       selecao: dados.selecao,
       personalizadas: P.copiar(dados.definicoes),
-      formato: dados.formato
+      formato: dados.formato,
+      visibilidade: podeCompartilhar ? dados.visibilidade : undefined
     });
   }
 
@@ -154,6 +185,12 @@
   CE.modelos = {
     ID_EM_BRANCO: ID_EM_BRANCO,
     TIPO_PADRAO: TIPO_PADRAO,
+    INDIVIDUAL: INDIVIDUAL,
+    COMPARTILHADO: COMPARTILHADO,
+    podeCompartilhar: podeCompartilhar,
+    campoVisibilidade: campoVisibilidade,
+    /* o usuário pode regravar, excluir e mudar a visibilidade do modelo */
+    podeAlterar: function (id) { var m = obter(id); return !!(m && m.salvo && m.podeAlterar); },
     tipos: tipos,
     salvarTipos: salvarTipos,
     obter: obter,

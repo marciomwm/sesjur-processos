@@ -88,6 +88,9 @@ final class AuditoriaService
         'INTIMACAO_CRIADA'           => 'Intimação registrada',
         'INTIMACAO_EDITADA'          => 'Intimação alterada',
         'INTIMACAO_EXCLUIDA'         => 'Intimação excluída',
+        'MODELO_EXPEDIENTE_COMPARTILHADO'   => 'Modelo de expediente compartilhado',
+        'MODELO_EXPEDIENTE_INDIVIDUALIZADO' => 'Modelo de expediente deixou de ser compartilhado',
+        'MODELO_EXPEDIENTE_EXCLUIDO'        => 'Modelo de expediente compartilhado excluído',
     ];
 
     /** Rotulo de exibicao de qualquer acao (USUARIO_EDITADO, LOTACAO_INATIVADA...). */

@@ -319,193 +319,193 @@
   }
 
   /* ---------------------------------------------------------------------------
-     3. MODELOS SALVOS PELO ASSESSOR
-     Guardam o texto já editado (HTML com tokens), as propriedades criadas e a
-     seleção de propriedades do documento.
+     3. MODELOS SALVOS
+     Gravados no SESJUR (api/expediente-modelos.php). A página entrega os que o
+     usuário vê — os dele e os compartilhados —; cada escrita vai ao servidor e
+     o registro devolvido substitui o local. Criar, atualizar, excluir e
+     duplicar devolvem Promise de { ok, id } ou { ok: false, erro }.
+
+     Visibilidade: INDIVIDUAL (padrão) só aparece para quem criou;
+     COMPARTILHADO aparece para todos. `podeAlterar` vem do servidor: só
+     Administrador e Gestor alteram um compartilhado. Favorito e contagem de
+     uso são de cada usuário.
      --------------------------------------------------------------------------- */
-  var CHAVE_SALVOS = 'unijur_ci_modelos_v1';
   var SALVOS = {};      /* id -> registro */
   var ORDEM_SALVOS = [];
+  var MSG_FALHA_GRAVAR = 'Não foi possível gravar o modelo no SESJUR. Verifique a conexão e tente novamente.';
 
-  function lerSalvos() {
+  /* "modelo:12" -> 12, o id do banco */
+  function idDoBanco(id) { return Number(String(id).replace(/^modelo:/, '')); }
+
+  /* Acrescenta (ou substitui) um registro vindo do servidor. */
+  function registrar(reg) {
+    if (!reg || !reg.id || !reg.nome) return null;
+    var baseId = MODELOS[reg.base] ? reg.base : ORDEM[0];
+    var base = MODELOS[baseId];
+    var m = {
+      id: reg.id,
+      nome: reg.nome,
+      base: baseId,
+      salvo: true,
+      html: typeof reg.html === 'string' ? reg.html : '',
+      propriedades: base.propriedades,
+      personalizadas: Array.isArray(reg.personalizadas) ? reg.personalizadas : [],
+      selecao: Array.isArray(reg.selecao) ? reg.selecao : null,
+      tipo: reg.tipo || 'Outro',
+      formato: reg.formato || null,
+      visibilidade: reg.visibilidade === 'COMPARTILHADO' ? 'COMPARTILHADO' : 'INDIVIDUAL',
+      compartilhado: reg.visibilidade === 'COMPARTILHADO',
+      podeAlterar: !!reg.podeAlterar,
+      proprio: !!reg.proprio,
+      criadoEm: reg.criadoEm || null,
+      atualizadoEm: reg.atualizadoEm || null,
+      favorito: !!reg.favorito,
+      usos: reg.usos || 0,
+      ultimoUsoEm: reg.ultimoUsoEm || null,
+      autor: reg.autor || null,
+      descricao: reg.descricao || '',
+      assuntoPadrao: reg.assuntoPadrao || base.assuntoPadrao,
+      padroes: base.padroes,
+      rotulos: base.rotulos,
+      blocos: base.blocos,
+      corpo: base.corpo,
+      arquivo: base.arquivo
+    };
+    definirCampos(m);
+    if (!SALVOS[m.id]) ORDEM_SALVOS.push(m.id);
+    SALVOS[m.id] = m;
+    return m;
+  }
+
+  /* Sem argumento, relê a lista entregue pela página. */
+  function lerSalvos(lista) {
     SALVOS = {}; ORDEM_SALVOS = [];
-    var lista;
-    try {
-      lista = JSON.parse(localStorage.getItem(CHAVE_SALVOS) || '[]');
-    } catch (e) { lista = []; }
-    if (!Array.isArray(lista)) lista = [];
-
-    lista.forEach(function (reg) {
-      if (!reg || !reg.id || !reg.nome || typeof reg.html !== 'string') return;
-      var base = MODELOS[reg.base] || MODELOS[ORDEM[0]];
-      SALVOS[reg.id] = {
-        id: reg.id,
-        nome: reg.nome,
-        base: MODELOS[reg.base] ? reg.base : ORDEM[0],
-        salvo: true,
-        html: reg.html,
-        propriedades: base.propriedades,
-        personalizadas: Array.isArray(reg.personalizadas) ? reg.personalizadas
-                      : (Array.isArray(reg.propriedades) ? reg.propriedades : []),
-        selecao: Array.isArray(reg.selecao) ? reg.selecao : null,
-        tipo: reg.tipo || 'Outro',
-        formato: reg.formato || null,
-        criadoEm: reg.criadoEm || null,
-        atualizadoEm: reg.atualizadoEm || null,
-        favorito: !!reg.favorito,
-        usos: reg.usos || 0,
-        ultimoUsoEm: reg.ultimoUsoEm || null,
-        autor: reg.autor || null,
-        descricao: reg.descricao || '',
-        assuntoPadrao: reg.assuntoPadrao || base.assuntoPadrao,
-        padroes: base.padroes,
-        rotulos: base.rotulos,
-        blocos: base.blocos,
-        corpo: base.corpo,
-        arquivo: base.arquivo
-      };
-      definirCampos(SALVOS[reg.id]);
-      ORDEM_SALVOS.push(reg.id);
-    });
+    (Array.isArray(lista) ? lista : (SESJUR.modelos || [])).forEach(registrar);
     return ORDEM_SALVOS;
   }
 
-  function gravarSalvos() {
-    var lista = ORDEM_SALVOS.map(function (id) {
-      var m = SALVOS[id];
-      return {
-        id: m.id, nome: m.nome, base: m.base, html: m.html,
-        personalizadas: m.personalizadas,
-        /* mantém a chave antiga para quem já tem modelos gravados */
-        propriedades: m.personalizadas,
-        selecao: m.selecao,
-        tipo: m.tipo,
-        formato: m.formato,
-        criadoEm: m.criadoEm,
-        atualizadoEm: m.atualizadoEm,
-        favorito: m.favorito,
-        usos: m.usos,
-        ultimoUsoEm: m.ultimoUsoEm,
-        autor: m.autor,
-        descricao: m.descricao,
-        assuntoPadrao: m.assuntoPadrao
-      };
-    });
-    try {
-      localStorage.setItem(CHAVE_SALVOS, JSON.stringify(lista));
-      return true;
-    } catch (e) { return false; }
+  function pedir(metodo, corpo) {
+    return fetch(String(SESJUR.apiUrl || '').replace(/\/$/, '') + '/expediente-modelos.php', {
+      method: metodo,
+      credentials: 'same-origin',
+      headers: { 'Accept': 'application/json', 'Content-Type': 'application/json', 'X-CSRF-Token': SESJUR.csrf || '' },
+      body: JSON.stringify(corpo)
+    }).then(function (resposta) { return resposta.json(); })
+      .then(function (dados) {
+        if (dados && dados.success) return { ok: true, dados: dados };
+        return { ok: false, erro: (dados && dados.error && dados.error.message) || MSG_FALHA_GRAVAR };
+      })
+      .catch(function () { return { ok: false, erro: MSG_FALHA_GRAVAR }; });
   }
 
-  /* `extras` = { tipo, formato } — metadados do modelo. O protocolo do processo
-     NUNCA entra aqui: ele pertence ao expediente, não ao modelo. */
+  /* Escrita que devolve o modelo gravado. */
+  function gravar(corpo) {
+    return pedir('POST', corpo).then(function (r) {
+      if (!r.ok) return r;
+      var m = registrar(r.dados.modelo);
+      return m ? { ok: true, id: m.id } : { ok: false, erro: MSG_FALHA_GRAVAR };
+    });
+  }
+
+  function nomeDoSistema(nome) {
+    return ORDEM.some(function (id) { return MODELOS[id].nome.toLowerCase() === nome.toLowerCase(); });
+  }
+
+  function falha(erro) { return Promise.resolve({ ok: false, erro: erro }); }
+
+  /* `extras` = { tipo, formato, visibilidade } — metadados do modelo. O
+     protocolo do processo NUNCA entra aqui: ele pertence ao expediente, não
+     ao modelo. */
   function salvarModelo(nome, baseId, html, personalizadas, assuntoPadrao, descricao, selecao, extras) {
     extras = extras || {};
-    var agora = new Date().toISOString();
     var limpo = String(nome || '').trim();
-    if (!limpo) return { ok: false, erro: 'Informe um nome para o modelo.' };
-    if (ORDEM_SALVOS.some(function (id) { return SALVOS[id].nome.toLowerCase() === limpo.toLowerCase(); })) {
-      return { ok: false, erro: 'Já existe um modelo salvo com este nome.' };
-    }
-    if (ORDEM.some(function (id) { return MODELOS[id].nome.toLowerCase() === limpo.toLowerCase(); })) {
-      return { ok: false, erro: 'Este nome é de um modelo do sistema. Escolha outro.' };
-    }
+    if (!limpo) return falha('Informe um nome para o modelo.');
+    if (nomeDoSistema(limpo)) return falha('Este nome é de um modelo do sistema. Escolha outro.');
     var base = MODELOS[baseId] ? baseId : ORDEM[0];
     if (SALVOS[base]) base = SALVOS[base].base;   /* salvar sobre um salvo aponta para o original */
 
-    var id = 'meu:' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
-    SALVOS[id] = {
-      id: id, nome: limpo, base: base, salvo: true, html: html,
-      propriedades: MODELOS[base].propriedades,
-      personalizadas: personalizadas || [],
-      selecao: Array.isArray(selecao) ? selecao.slice() : null,
+    return gravar({ acao: 'criar', modelo: {
+      nome: limpo,
       tipo: String(extras.tipo || '').trim() || 'Outro',
-      formato: extras.formato || null,
-      criadoEm: agora,
-      atualizadoEm: agora,
-      favorito: false,
-      usos: 0,
-      ultimoUsoEm: null,
-      autor: null,   /* reservado: ainda não há autenticação */
       descricao: String(descricao || '').trim(),
-      assuntoPadrao: assuntoPadrao || MODELOS[base].assuntoPadrao,
-      padroes: MODELOS[base].padroes,
-      rotulos: MODELOS[base].rotulos,
-      blocos: MODELOS[base].blocos,
-      corpo: MODELOS[base].corpo,
-      arquivo: MODELOS[base].arquivo
-    };
-    definirCampos(SALVOS[id]);
-    ORDEM_SALVOS.push(id);
-    if (!gravarSalvos()) {
-      delete SALVOS[id];
-      ORDEM_SALVOS.pop();
-      return { ok: false, erro: 'Não foi possível gravar o modelo neste navegador.' };
-    }
-    return { ok: true, id: id };
+      visibilidade: extras.visibilidade || 'INDIVIDUAL',
+      conteudo: {
+        base: base,
+        html: html || '',
+        personalizadas: personalizadas || [],
+        selecao: Array.isArray(selecao) ? selecao.slice() : null,
+        formato: extras.formato || null,
+        assuntoPadrao: assuntoPadrao || MODELOS[base].assuntoPadrao || null
+      }
+    } });
   }
 
-  /* Regrava um modelo personalizado já existente (usado por "Atualizar modelo").
-     Só os campos informados são alterados. */
+  /* Regrava um modelo salvo (usado por "Atualizar modelo"). Só os campos
+     informados são alterados. */
   function atualizarModelo(id, mudancas) {
     var m = SALVOS[id];
-    if (!m) return { ok: false, erro: 'Modelo personalizado não encontrado.' };
+    if (!m) return falha('Modelo não encontrado.');
+    if (!m.podeAlterar) return falha('Somente administradores e gestores podem alterar modelos compartilhados.');
     mudancas = mudancas || {};
+    var dados = {};
 
     if (typeof mudancas.nome === 'string') {
       var limpo = mudancas.nome.trim();
-      if (!limpo) return { ok: false, erro: 'Informe um nome para o modelo.' };
-      var repetido = ORDEM_SALVOS.some(function (outro) {
-        return outro !== id && SALVOS[outro].nome.toLowerCase() === limpo.toLowerCase();
-      }) || ORDEM.some(function (f) { return MODELOS[f].nome.toLowerCase() === limpo.toLowerCase(); });
-      if (repetido) return { ok: false, erro: 'Já existe um modelo com este nome.' };
-      m.nome = limpo;
+      if (!limpo) return falha('Informe um nome para o modelo.');
+      if (nomeDoSistema(limpo)) return falha('Já existe um modelo com este nome.');
+      dados.nome = limpo;
     }
-    if (typeof mudancas.descricao === 'string') m.descricao = mudancas.descricao.trim();
-    if (typeof mudancas.html === 'string') m.html = mudancas.html;
-    if (Array.isArray(mudancas.personalizadas)) m.personalizadas = mudancas.personalizadas;
-    if (Array.isArray(mudancas.selecao)) m.selecao = mudancas.selecao.slice();
-    if (typeof mudancas.assuntoPadrao === 'string') m.assuntoPadrao = mudancas.assuntoPadrao;
-    if (typeof mudancas.tipo === 'string' && mudancas.tipo.trim()) m.tipo = mudancas.tipo.trim();
-    if (mudancas.formato && typeof mudancas.formato === 'object') m.formato = mudancas.formato;
-    m.atualizadoEm = new Date().toISOString();
+    if (typeof mudancas.descricao === 'string') dados.descricao = mudancas.descricao.trim();
+    if (typeof mudancas.tipo === 'string' && mudancas.tipo.trim()) dados.tipo = mudancas.tipo.trim();
+    if (mudancas.visibilidade) dados.visibilidade = mudancas.visibilidade;
 
-    if (!gravarSalvos()) return { ok: false, erro: 'Não foi possível gravar o modelo neste navegador.' };
-    return { ok: true, id: id };
+    var conteudo = {
+      base: m.base, html: m.html, personalizadas: m.personalizadas, selecao: m.selecao,
+      formato: m.formato, assuntoPadrao: m.assuntoPadrao
+    };
+    var mudouConteudo = false;
+    if (typeof mudancas.html === 'string') { conteudo.html = mudancas.html; mudouConteudo = true; }
+    if (Array.isArray(mudancas.personalizadas)) { conteudo.personalizadas = mudancas.personalizadas; mudouConteudo = true; }
+    if (Array.isArray(mudancas.selecao)) { conteudo.selecao = mudancas.selecao.slice(); mudouConteudo = true; }
+    if (typeof mudancas.assuntoPadrao === 'string') { conteudo.assuntoPadrao = mudancas.assuntoPadrao; mudouConteudo = true; }
+    if (mudancas.formato && typeof mudancas.formato === 'object') { conteudo.formato = mudancas.formato; mudouConteudo = true; }
+    if (mudouConteudo) dados.conteudo = conteudo;
+
+    return gravar({ acao: 'atualizar', id: idDoBanco(id), modelo: dados });
   }
 
   function excluirModelo(id) {
-    if (!SALVOS[id]) return false;
-    delete SALVOS[id];
-    ORDEM_SALVOS = ORDEM_SALVOS.filter(function (x) { return x !== id; });
-    gravarSalvos();
-    return true;
+    if (!SALVOS[id]) return falha('Modelo não encontrado.');
+    return pedir('DELETE', { id: idDoBanco(id) }).then(function (r) {
+      if (!r.ok) return r;
+      delete SALVOS[id];
+      ORDEM_SALVOS = ORDEM_SALVOS.filter(function (x) { return x !== id; });
+      return { ok: true, id: id };
+    });
   }
 
-  /* Favorito e contagem de uso não são "edição": não mexem em atualizadoEm. */
+  /* Favorito e contagem de uso são do usuário e não são "edição": a tela
+     muda na hora e o servidor é avisado em seguida. */
   function marcarFavorito(id, favorito) {
     if (!SALVOS[id]) return false;
     SALVOS[id].favorito = !!favorito;
-    return gravarSalvos();
+    pedir('POST', { acao: 'favoritar', id: idDoBanco(id), favorito: !!favorito });
+    return true;
   }
 
   function registrarUso(id) {
     if (!SALVOS[id]) return false;
     SALVOS[id].usos = (SALVOS[id].usos || 0) + 1;
     SALVOS[id].ultimoUsoEm = new Date().toISOString();
-    return gravarSalvos();
+    pedir('POST', { acao: 'usar', id: idDoBanco(id) });
+    return true;
   }
 
-  /* "Cópia de X", com id novo; o original não é tocado. */
+  /* "Cópia de X", com id novo e sempre individual de quem duplicou; o
+     original não é tocado. */
   function duplicarModelo(id) {
-    var m = SALVOS[id];
-    if (!m) return { ok: false, erro: 'Modelo não encontrado.' };
-    var nome = 'Cópia de ' + m.nome, n = 2;
-    while (ORDEM_SALVOS.some(function (x) { return SALVOS[x].nome.toLowerCase() === nome.toLowerCase(); })) {
-      nome = 'Cópia de ' + m.nome + ' (' + (n++) + ')';
-    }
-    return salvarModelo(nome, m.base, m.html, JSON.parse(JSON.stringify(m.personalizadas || [])),
-                        m.assuntoPadrao, m.descricao, m.selecao, { tipo: m.tipo, formato: m.formato });
+    if (!SALVOS[id]) return falha('Modelo não encontrado.');
+    return gravar({ acao: 'duplicar', id: idDoBanco(id) });
   }
 
   function modelo(id) { return SALVOS[id] || MODELOS[id] || null; }

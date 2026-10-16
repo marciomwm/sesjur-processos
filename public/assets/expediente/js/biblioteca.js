@@ -4,6 +4,10 @@
    Ponto central para localizar, visualizar, criar, editar, duplicar, usar,
    excluir e organizar modelos. Não tem editor próprio: criar e editar abrem o
    Criador de Expedientes com o modelo carregado.
+
+   Mostra os modelos do usuário e os compartilhados. Um compartilhado só é
+   editado ou excluído por Administrador ou Gestor; os demais o usam ou o
+   duplicam (a cópia é individual).
    ============================================================================= */
 (function (global) {
   'use strict';
@@ -14,6 +18,7 @@
   var esc = ui.esc, semAcento = ui.semAcento;
 
   var FAVORITOS = '__favoritos__';
+  var COMPARTILHADOS = '__compartilhados__';
   var ORDENACOES = [
     ['atualizado', 'Última atualização'],
     ['nome', 'Nome'],
@@ -43,7 +48,9 @@
 
   function correspondeAoTipo(m) {
     if (!filtro.tipo) return true;
-    return filtro.tipo === FAVORITOS ? m.favorito : m.tipo === filtro.tipo;
+    if (filtro.tipo === FAVORITOS) return m.favorito;
+    if (filtro.tipo === COMPARTILHADOS) return m.compartilhado;
+    return m.tipo === filtro.tipo;
   }
 
   var COMPARADORES = {
@@ -69,6 +76,8 @@
     }
     var html = chip(null, 'Todos', naBusca.length);
     html += chip(FAVORITOS, '★ Favoritos', naBusca.filter(function (m) { return m.favorito; }).length);
+    var compartilhados = naBusca.filter(function (m) { return m.compartilhado; }).length;
+    if (compartilhados || filtro.tipo === COMPARTILHADOS) html += chip(COMPARTILHADOS, 'Compartilhados', compartilhados);
     M.tipos().forEach(function (tipo) {
       var n = naBusca.filter(function (m) { return m.tipo === tipo; }).length;
       if (n || filtro.tipo === tipo) html += chip(tipo, tipo, n);
@@ -78,8 +87,11 @@
 
   function htmlCartao(m) {
     var n = colunas(m).length;
+    var altera = M.podeAlterar(m.id);
     return '<article class="cartao-modelo" data-id="' + esc(m.id) + '">' +
       '<header><span class="cartao-tipo">' + esc(m.tipo) + '</span>' +
+      (m.compartilhado ? '<span class="cartao-tipo cartao-compartilhado" title="Disponível para todos os usuários' +
+        (m.autor ? ' · criado por ' + esc(m.autor) : '') + '">Compartilhado</span>' : '') +
       '<button type="button" class="btn-estrela' + (m.favorito ? ' ativo' : '') + '" data-acao="favoritar" ' +
         'aria-pressed="' + !!m.favorito + '" title="' + (m.favorito ? 'Remover dos favoritos' : 'Marcar como favorito') + '">' +
         (m.favorito ? '★' : '☆') + '</button></header>' +
@@ -92,11 +104,11 @@
       '<details class="menu-cartao"><summary class="btn btn-mini" aria-label="Mais ações de ' + esc(m.nome) + '">⋮</summary>' +
         '<div class="menu">' +
           '<button type="button" data-acao="visualizar">Visualizar</button>' +
-          '<button type="button" data-acao="editar">Editar</button>' +
+          (altera ? '<button type="button" data-acao="editar">Editar</button>' : '') +
           '<button type="button" data-acao="duplicar">Duplicar</button>' +
           '<button type="button" data-acao="lote">Criar documentos em lote</button>' +
-          '<div class="menu-sep" role="separator"></div>' +
-          '<button type="button" data-acao="excluir" class="item-perigo">Excluir</button>' +
+          (altera ? '<div class="menu-sep" role="separator"></div>' +
+            '<button type="button" data-acao="excluir" class="item-perigo">Excluir</button>' : '') +
         '</div></details></footer></article>';
   }
 
@@ -143,15 +155,19 @@
       mensagem: 'O modelo é criado vazio e aberto no Criador de Expedientes para você escrever o texto e definir as propriedades.',
       campos: [
         { id: 'titulo', label: 'Título do modelo', placeholder: 'Ex.: Ofício de solicitação de informações' },
-        { id: 'tipo', label: 'Tipo', valor: filtro.tipo && filtro.tipo !== FAVORITOS ? filtro.tipo : M.tipos()[0],
+        { id: 'tipo', label: 'Tipo', valor: M.tipos().indexOf(filtro.tipo) !== -1 ? filtro.tipo : M.tipos()[0],
           opcoes: M.tipos().map(function (t) { return { valor: t, label: t }; }) },
-        { id: 'descricao', label: 'Descrição', multilinha: true, placeholder: 'Quando usar este modelo' }
-      ],
+        { id: 'descricao', label: 'Descrição', multilinha: true, placeholder: 'Quando usar este modelo' },
+        M.campoVisibilidade(null)
+      ].filter(Boolean),
       okLabel: 'Criar e editar',
       validar: function (v) { return v.titulo ? null : 'Informe o título do modelo.'; }
     }).then(function (v) {
-      if (!v) return;
-      var r = M.salvarComo({ titulo: v.titulo, tipo: v.tipo, descricao: v.descricao, conteudo: '', definicoes: [], selecao: [] });
+      if (!v) return null;
+      return M.salvarComo({ titulo: v.titulo, tipo: v.tipo, descricao: v.descricao, visibilidade: v.visibilidade,
+                            conteudo: '', definicoes: [], selecao: [] });
+    }).then(function (r) {
+      if (!r) return;
       if (!r.ok) { ui.toast(r.erro, 'erro'); return; }
       CE.criador.sincronizar();
       CE.nav.ir('#/criador?modelo=' + encodeURIComponent(r.id) + '&editar=1');
@@ -161,13 +177,16 @@
   function excluir(m) {
     ui.dialogo({
       titulo: 'Excluir modelo?',
-      mensagem: '"' + m.nome + '" — Esta ação não excluirá documentos nem lotes anteriormente produzidos com este modelo.',
+      mensagem: '"' + m.nome + '" — Esta ação não excluirá documentos nem lotes anteriormente produzidos com este modelo.' +
+                (m.compartilhado ? ' O modelo é compartilhado e deixará de existir para todos os usuários.' : ''),
       okLabel: 'Excluir',
       perigo: true
     }).then(function (v) {
-      if (!v) return;
+      return v ? M.excluir(m.id) : null;
+    }).then(function (r) {
+      if (!r) return;
+      if (!r.ok) { ui.toast(r.erro, 'erro'); return; }
       CE.criador.soltarModelo(m.id);
-      M.excluir(m.id);
       CE.criador.sincronizar();
       renderResultado();
       ui.toast('Modelo excluído.');
@@ -222,7 +241,8 @@
     dlg.className = 'dlg';
     dlg.innerHTML = '<h2>Tipos de modelo</h2>' +
       '<p class="dlg-msg">Renomear um tipo atualiza os modelos que o usam. Ao excluir, os modelos daquele tipo passam para “' +
-        esc(M.TIPO_PADRAO) + '”.</p><div class="lista-opcoes"></div>' +
+        esc(M.TIPO_PADRAO) + '”.' + (M.podeCompartilhar ? '' : ' Modelos compartilhados mantêm o tipo que têm.') +
+        '</p><div class="lista-opcoes"></div>' +
       '<button type="button" class="btn btn-mini" data-acao="mais">+ Novo tipo</button>' +
       '<div class="botoes dlg-botoes"><button type="button" class="btn btn-fantasma" data-acao="cancelar">Cancelar</button>' +
       '<button type="button" class="btn btn-principal" data-acao="salvar">Salvar</button></div>';
@@ -256,12 +276,16 @@
         var edicoes = Array.prototype.map.call(caixa.children, function (r) {
           return { original: r.dataset.original || null, nome: r.querySelector('input').value };
         });
-        M.salvarTipos(edicoes);
         fechar();
-        if (filtro.tipo && filtro.tipo !== FAVORITOS && M.tipos().indexOf(filtro.tipo) === -1) filtro.tipo = null;
-        CE.criador.sincronizar();
-        renderResultado();
-        ui.toast('Tipos de modelo atualizados.');
+        M.salvarTipos(edicoes).then(function (r) {
+          if (filtro.tipo && filtro.tipo !== FAVORITOS && filtro.tipo !== COMPARTILHADOS &&
+              M.tipos().indexOf(filtro.tipo) === -1) filtro.tipo = null;
+          CE.criador.sincronizar();
+          renderResultado();
+          if (r.falhas) ui.toast('Tipos atualizados, mas ' + (r.falhas === 1 ? 'um modelo não pôde ser regravado'
+                                 : r.falhas + ' modelos não puderam ser regravados') + '. Tente novamente.', 'erro');
+          else ui.toast('Tipos de modelo atualizados.');
+        });
       }
     });
     CE.ui.raiz().appendChild(dlg);
@@ -277,11 +301,12 @@
       case 'excluir': excluir(m); break;
       case 'favoritar': M.favoritar(m.id, !m.favorito); renderResultado(); break;
       case 'duplicar':
-        var r = M.duplicar(m.id);
-        if (!r.ok) { ui.toast(r.erro, 'erro'); return; }
-        CE.criador.sincronizar();
-        renderResultado();
-        ui.toast('Modelo duplicado: "' + M.obter(r.id).nome + '".');
+        M.duplicar(m.id).then(function (r) {
+          if (!r.ok) { ui.toast(r.erro, 'erro'); return; }
+          CE.criador.sincronizar();
+          renderResultado();
+          ui.toast('Modelo duplicado: "' + M.obter(r.id).nome + '".');
+        });
         break;
     }
   }

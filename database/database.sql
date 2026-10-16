@@ -1060,6 +1060,45 @@ CREATE TABLE `intimacoes_pessoais` (
         FOREIGN KEY (`excluida_por`) REFERENCES `usuarios` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- ---------------------------------------------------------------------
+-- Modelos do Gerador de Expedientes. INDIVIDUAL (padrao) so aparece para
+-- quem o criou; COMPARTILHADO aparece para todos, e so Administrador ou
+-- Gestor o cria, altera ou exclui. Favorito e uso sao de cada usuario.
+-- ---------------------------------------------------------------------
+CREATE TABLE `expediente_modelos` (
+    `id`             INT UNSIGNED  NOT NULL AUTO_INCREMENT,
+    `nome`           VARCHAR(150)  NOT NULL,
+    `tipo`           VARCHAR(80)   NOT NULL DEFAULT 'Outro' COMMENT 'Ofício, Despacho... (lista mantida no gerador)',
+    `descricao`      VARCHAR(1000) NULL,
+    `conteudo`       JSON          NOT NULL COMMENT 'base, html, personalizadas, selecao, formato, assuntoPadrao',
+    `visibilidade`   ENUM('INDIVIDUAL','COMPARTILHADO') NOT NULL DEFAULT 'INDIVIDUAL',
+    `criado_por`     INT UNSIGNED  NOT NULL,
+    `atualizado_por` INT UNSIGNED  NULL,
+    `created_at`     DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `updated_at`     DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    KEY `ix_em_visibilidade` (`visibilidade`),
+    KEY `ix_em_criado_por` (`criado_por`),
+    CONSTRAINT `fk_em_criado_por`
+        FOREIGN KEY (`criado_por`) REFERENCES `usuarios` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT `fk_em_atualizado_por`
+        FOREIGN KEY (`atualizado_por`) REFERENCES `usuarios` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE `expediente_modelo_usuarios` (
+    `modelo_id`     INT UNSIGNED NOT NULL,
+    `usuario_id`    INT UNSIGNED NOT NULL,
+    `favorito`      TINYINT(1)   NOT NULL DEFAULT 0,
+    `usos`          INT UNSIGNED NOT NULL DEFAULT 0,
+    `ultimo_uso_em` DATETIME     NULL,
+    PRIMARY KEY (`modelo_id`, `usuario_id`),
+    KEY `ix_emu_usuario` (`usuario_id`),
+    CONSTRAINT `fk_emu_modelo`
+        FOREIGN KEY (`modelo_id`) REFERENCES `expediente_modelos` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT `fk_emu_usuario`
+        FOREIGN KEY (`usuario_id`) REFERENCES `usuarios` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- Valores iniciais das tabelas de apoio. AJUSTAR as lotacoes para as
 -- unidades reais da SES-MT (nome oficial e sigla do SIGADOC).
 INSERT INTO `cargos` (`nome`) VALUES

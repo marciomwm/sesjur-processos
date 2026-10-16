@@ -384,9 +384,11 @@
 
   function renderIdentidadeModelo() {
     var m = modelo();
-    el.modeloDesc.textContent = (m.salvo ? m.tipo + (m.descricao ? ' · ' : '') : '') + m.descricao;
-    el.btnExcluirModelo.hidden = !m.salvo;
-    el.btnAtualizarModelo.hidden = !m.salvo;
+    el.modeloDesc.textContent = (m.salvo ? m.tipo + (m.compartilhado ? ' · Compartilhado' : '') + (m.descricao ? ' · ' : '') : '') +
+                                m.descricao;
+    /* compartilhado: só Administrador e Gestor regravam ou excluem */
+    el.btnExcluirModelo.hidden = !M.podeAlterar(m.id);
+    el.btnAtualizarModelo.hidden = !M.podeAlterar(m.id);
     el.btnSelPadrao.hidden = emBranco();
   }
 
@@ -446,8 +448,9 @@
         { id: 'tipo', label: 'Tipo', valor: m ? m.tipo : M.tipos()[0],
           opcoes: M.tipos().map(function (t) { return { valor: t, label: t }; }) },
         { id: 'descricao', label: 'Descrição', valor: m ? m.descricao : '', multilinha: true,
-          placeholder: 'Ex.: Modelo utilizado para solicitar informações complementares às unidades administrativas.' }
-      ],
+          placeholder: 'Ex.: Modelo utilizado para solicitar informações complementares às unidades administrativas.' },
+        M.campoVisibilidade(m)
+      ].filter(Boolean),
       okLabel: okLabel,
       validar: function (v) { return v.titulo ? null : 'Informe o título do modelo.'; }
     };
@@ -457,7 +460,7 @@
      nem os valores preenchidos. */
   function retratoParaModelo(v) {
     return {
-      titulo: v.titulo, tipo: v.tipo, descricao: v.descricao,
+      titulo: v.titulo, tipo: v.tipo, descricao: v.descricao, visibilidade: v.visibilidade,
       baseId: estado.modeloId,
       conteudo: fonteAtual(),
       definicoes: definicoes(),
@@ -470,11 +473,17 @@
   function salvarComoModelo() {
     var op = camposDoModelo(null, 'Salvar modelo');
     op.titulo = 'Salvar como modelo';
-    op.mensagem = 'O texto, a formatação e as propriedades ficam guardados como um novo modelo neste navegador. ' +
+    op.mensagem = 'O texto, a formatação e as propriedades ficam guardados como um novo modelo. ' +
+                  (M.podeCompartilhar ? 'Individual: só você o vê; compartilhado: fica disponível para todos os usuários. '
+                                      : 'O modelo é individual: só você o vê. ') +
                   'O protocolo e os valores preenchidos não fazem parte do modelo.';
+    var retrato;
     dialogo(op).then(function (v) {
-      if (!v) return;
-      var r = M.salvarComo(retratoParaModelo(v));
+      if (!v) return null;
+      retrato = retratoParaModelo(v);
+      return M.salvarComo(retrato);
+    }).then(function (r) {
+      if (!r) return;
       if (!r.ok) { toast(r.erro, 'erro'); return; }
 
       /* o expediente passa a usar o modelo novo, levando as propriedades atuais */
@@ -482,39 +491,47 @@
       estado.definicoes[r.id] = P.copiar(definicoes());
       estado.modeloId = r.id;
       aposTrocarModelo();
-      toast('Modelo "' + v.titulo + '" salvo.');
+      toast('Modelo "' + retrato.titulo + '" salvo.');
     });
   }
 
   function atualizarModeloAtual() {
     var m = modelo();
-    if (!m.salvo) return;
+    if (!M.podeAlterar(m.id)) return;
     var op = camposDoModelo(m, 'Atualizar');
     op.titulo = 'Atualizar modelo';
-    op.mensagem = 'Regrava este modelo com o texto, a formatação e as propriedades atuais.';
+    op.mensagem = 'Regrava este modelo com o texto, a formatação e as propriedades atuais.' +
+                  (m.compartilhado ? ' O modelo é compartilhado: a alteração vale para todos os usuários.' : '');
+    var titulo;
     dialogo(op).then(function (v) {
-      if (!v) return;
-      var r = M.atualizar(m.id, retratoParaModelo(v));
+      if (!v) return null;
+      titulo = v.titulo;
+      return M.atualizar(m.id, retratoParaModelo(v));
+    }).then(function (r) {
+      if (!r) return;
       if (!r.ok) { toast(r.erro, 'erro'); return; }
       estado.conteudo = null;   /* o texto atual passou a SER o do modelo */
       renderSeletor();
       renderEditor();
       aoAlterarDados();
-      toast('Modelo "' + v.titulo + '" atualizado.');
+      toast('Modelo "' + titulo + '" atualizado.');
     });
   }
 
   function excluirModeloAtual() {
     var m = modelo();
-    if (!m.salvo) return;
+    if (!M.podeAlterar(m.id)) return;
     dialogo({
       titulo: 'Excluir modelo',
-      mensagem: 'Excluir o modelo "' + m.nome + '"? Esta ação não pode ser desfeita.',
+      mensagem: 'Excluir o modelo "' + m.nome + '"? Esta ação não pode ser desfeita.' +
+                (m.compartilhado ? ' O modelo é compartilhado e deixará de existir para todos os usuários.' : ''),
       okLabel: 'Excluir',
       perigo: true
     }).then(function (v) {
-      if (!v) return;
-      M.excluir(m.id);
+      return v ? M.excluir(m.id) : null;
+    }).then(function (r) {
+      if (!r) return;
+      if (!r.ok) { toast(r.erro, 'erro'); return; }
       delete estado.selecao[m.id];
       delete estado.definicoes[m.id];
       estado.modeloId = M.ID_EM_BRANCO;
@@ -1431,7 +1448,7 @@
      salvar — até lá, o que se edita é o expediente. */
   function renderFaixaModelo() {
     var m = modelo();
-    el.faixaModelo.hidden = !(edicaoDeModelo && m.salvo);
+    el.faixaModelo.hidden = !(edicaoDeModelo && M.podeAlterar(m.id));
     if (!el.faixaModelo.hidden) el.faixaModeloNome.textContent = m.nome;
   }
 
@@ -1448,8 +1465,9 @@
     return pode.then(function (ok) {
       if (!ok) return false;
       if (!mesmo) { estado.modeloId = id; aposTrocarModelo(); }
-      edicaoDeModelo = !!opcoes.editar;
-      if (!opcoes.editar) M.registrarUso(id);
+      /* compartilhado sem permissão de alterar: abre só para uso */
+      edicaoDeModelo = !!opcoes.editar && M.podeAlterar(id);
+      if (!edicaoDeModelo) M.registrarUso(id);
       renderFaixaModelo();
       return true;
     });

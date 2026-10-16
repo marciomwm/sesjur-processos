@@ -14,7 +14,9 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../app/bootstrap.php';
 
+use App\Core\Csrf;
 use App\Services\ExpedienteService;
+use App\Services\ModeloExpedienteService;
 
 $configuracao = [
     'catalogo'   => ExpedienteService::catalogo(),
@@ -22,6 +24,11 @@ $configuracao = [
     'baseUrl'    => url(''),
     'apiUrl'     => rtrim((string)config('app.api_url'), '/'),
     'processoId' => entrada_int('processo_id'),
+    // Modelos visiveis ao usuario (os dele e os compartilhados); as escritas
+    // vao por api/expediente-modelos.php.
+    'modelos'          => (new ModeloExpedienteService())->visiveis(),
+    'podeCompartilhar' => ModeloExpedienteService::podeCompartilhar(),
+    'csrf'             => Csrf::token(),
 ];
 
 $scriptsExpediente = ['js/config.js', 'templates.js', 'engine.js', 'js/ui.js', 'js/properties.js', 'js/models.js',
