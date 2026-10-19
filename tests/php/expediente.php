@@ -9,6 +9,7 @@ declare(strict_types=1);
  */
 
 use App\Core\Database;
+use App\Repositories\ProcedimentoRepository;
 use App\Services\ExpedienteService;
 use App\Services\ProcessoAdministrativoService;
 use App\Services\ProcessoExtrajudicialService;
@@ -106,15 +107,21 @@ $t->teste('atributos do processo e dos judiciais e extrajudiciais vinculados', f
         'descricao' => 'Requisição de informações.', 'situacao' => 'PENDENTE_RESPOSTA',
     ]);
 
+    // Procedimento do catálogo; inativado logo depois para não tornar o
+    // campo obrigatório nos processos criados pelos testes seguintes.
+    $procedimentos = new ProcedimentoRepository();
+    $procedimentoId = $procedimentos->inserir(['nome' => 'Fornecimento de Produto de Saúde', 'descricao' => null], null);
+
     $pa = (new ProcessoAdministrativoService())->criar([
         'protocolo'          => 'SES-PRO-2026/73002',
         'data_abertura'      => '17/09/2026',
         'objeto'             => 'Cumprimento de decisão judicial',
-        'procedimento'       => 'Fornecimento de Produto de Saúde',
+        'procedimento_id'    => (string)$procedimentoId,
         'situacao'           => 'AGUARDANDO_ANDAMENTO',
         'judiciais_ids'      => [$pj1, $pj2],
         'extrajudiciais_ids' => [$pe],
     ]);
+    $procedimentos->definirAtivo($procedimentoId, false, null);
 
     $pacote = (new ExpedienteService())->pacote($pa);
 

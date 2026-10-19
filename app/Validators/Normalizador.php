@@ -213,17 +213,6 @@ final class Normalizador
         'OUTRA'                => 'Outra',
     ];
 
-    /**
-     * Procedimentos sugeridos para o processo administrativo. Lista aberta:
-     * o campo aceita qualquer texto digitado, estas sao apenas sugestoes
-     * exibidas no autocomplete (datalist).
-     */
-    public const PROCEDIMENTOS_SUGERIDOS = [
-        'Fornecimento de Produto de Saúde',
-        'Prestação de Informações Institucionais',
-        'Ressarcimento Interfederativo',
-    ];
-
     /** Tipos de movimentacao do SIGADOC (codigo => rotulo). */
     public const TIPOS_EVENTO = [
         'JUNTADA'          => 'Juntada',

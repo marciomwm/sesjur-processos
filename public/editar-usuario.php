@@ -15,7 +15,7 @@ use App\Services\UsuarioService;
 $id = entrada_int('id');
 if ($id === null) {
     flash('erro', 'Usuário não informado.');
-    redirecionar('usuarios.php');
+    redirecionar('configuracoes.php?aba=usuarios');
 }
 
 // Administrador edita qualquer usuario; os demais, apenas o proprio cadastro.
@@ -27,7 +27,7 @@ $proprio = usuario_logado_id() === $id;
 $registro = (new UsuarioRepository())->buscarPorId($id);
 if ($registro === null) {
     flash('erro', 'Usuário não encontrado.');
-    redirecionar('usuarios.php');
+    redirecionar('configuracoes.php?aba=usuarios');
 }
 
 $erros = [];
@@ -61,9 +61,9 @@ if ($proprio && !Auth::ehAdministrador()) {
     $breadcrumbs = ['Minha conta' => null, 'Meu cadastro' => 'usuario.php?id=' . $id, 'Editar' => null];
 } else {
     $titulo      = 'Editar Usuário';
-    $menuAtivo   = $proprio ? 'meu-cadastro' : 'usuarios';
+    $menuAtivo   = $proprio ? 'meu-cadastro' : 'config';
     $breadcrumbs = [
-        'Usuários'        => 'usuarios.php',
+        'Usuários'        => 'configuracoes.php?aba=usuarios',
         $registro['nome'] => 'usuario.php?id=' . $id,
         'Editar'          => null,
     ];

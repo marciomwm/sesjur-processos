@@ -28,7 +28,7 @@ $mensagem = static function (string $campo, string $ajuda = '') use ($erros): st
 };
 $dataObrigatoria = (bool)config('usuarios.data_nascimento_obrigatoria', false);
 $urlCancelar = $modo === 'novo'
-    ? url($agente !== null ? 'agente-publico.php?id=' . (int)$agente['id'] : 'usuarios.php')
+    ? url($agente !== null ? 'agente-publico.php?id=' . (int)$agente['id'] : 'configuracoes.php?aba=usuarios')
     : url('usuario.php?id=' . (int)($registro['id'] ?? 0));
 ?>
 <form method="post" id="formUsuario" class="form-usuario" novalidate>

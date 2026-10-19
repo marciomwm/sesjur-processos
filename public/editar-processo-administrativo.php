@@ -6,6 +6,7 @@ require_once __DIR__ . '/../app/bootstrap.php';
 use App\Core\Csrf;
 use App\Core\ValidationException;
 use App\Repositories\EventoAdministrativoRepository;
+use App\Repositories\ProcedimentoRepository;
 use App\Repositories\ProcessoAdministrativoRepository;
 use App\Repositories\ProcessoExtrajudicialRepository;
 use App\Repositories\ProcessoJudicialRepository;
@@ -35,8 +36,8 @@ $dados = [
     'protocolo'     => $registro['protocolo'],
     'data_abertura' => $registro['data_abertura'] ?? '',
     'objeto'        => $registro['objeto'] ?? '',
-    'procedimento'  => $registro['procedimento'] ?? '',
-    'prazo'         => $registro['prazo'] ?? '',
+    'procedimento_id' => (string)($registro['procedimento_id'] ?? ''),
+    'prazo'        => $registro['prazo'] ?? '',
     'prazo_hora'    => $registro['prazo_hora'] ?? '',
     'origem'        => $registro['origem'],
     'data_extracao' => $registro['data_extracao'] ?? '',
@@ -60,11 +61,14 @@ $judiciaisSelecionados = array_map(static fn(array $v): array => [
 ], $repoVin->judiciaisDoAdministrativo($id));
 $extrajudiciaisSelecionados = itens_vinculo_extrajudicial((new VinculoExtrajudicialRepository())->extrajudiciaisDoAdministrativo($id));
 
-$procedimentosSugeridos = array_unique(array_merge(
-    Normalizador::PROCEDIMENTOS_SUGERIDOS,
-    $repo->procedimentosDistintos()
-));
-sort($procedimentosSugeridos, SORT_FLAG_CASE | SORT_STRING);
+// Procedimento: itens ativos do catálogo; o já gravado, mesmo inativo, é
+// mantido como opção (nunca substituído automaticamente).
+$procedimentosAtivos = (new ProcedimentoRepository())->opcoesAtivas();
+$procedimentoAtual = $registro['procedimento_id'] !== null
+    ? ['id' => (int)$registro['procedimento_id'], 'nome' => $registro['procedimento_nome'], 'ativo' => (int)$registro['procedimento_ativo']]
+    : null;
+$procedimentoLegado = $registro['procedimento'];
+$procedimentoObrigatorio = $procedimentoAtual !== null;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     Csrf::exigir();
@@ -73,8 +77,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'protocolo'     => entrada('protocolo'),
         'data_abertura' => entrada('data_abertura'),
         'objeto'        => entrada('objeto'),
-        'procedimento'  => entrada('procedimento'),
-        'prazo'         => entrada('prazo'),
+        'procedimento_id' => entrada('procedimento_id'),
+        'prazo'        => entrada('prazo'),
         'prazo_hora'    => entrada('prazo_hora'),
         'origem'        => entrada('origem') ?: $registro['origem'],
         'data_extracao' => entrada('data_extracao'),
@@ -199,23 +203,7 @@ require APP_ROOT . '/Views/layout/cabecalho.php';
                         <span class="campo__erro"><?= e($erros['data_abertura']) ?></span>
                     <?php endif; ?>
                 </div>
-                <div class="campo campo--5">
-                    <label class="campo__rotulo" for="procedimento">Procedimento</label>
-                    <input class="input <?= isset($erros['procedimento']) ? 'is-invalido' : '' ?>"
-                           type="text" id="procedimento" name="procedimento" list="listaProcedimentos"
-                           maxlength="160" value="<?= e($dados['procedimento']) ?>"
-                           placeholder="Ex.: Fornecimento de Produto de Saúde" autocomplete="off">
-                    <datalist id="listaProcedimentos">
-                        <?php foreach ($procedimentosSugeridos as $sugestao): ?>
-                            <option value="<?= e($sugestao) ?>">
-                        <?php endforeach; ?>
-                    </datalist>
-                    <?php if (isset($erros['procedimento'])): ?>
-                        <span class="campo__erro"><?= e($erros['procedimento']) ?></span>
-                    <?php else: ?>
-                        <span class="campo__ajuda">Selecione uma sugestão ou digite outro procedimento.</span>
-                    <?php endif; ?>
-                </div>
+                <?php require APP_ROOT . '/Views/partials/campo-procedimento.php'; ?>
 
                 <?php require APP_ROOT . '/Views/partials/campos-prazo-pa.php'; ?>
 

@@ -5,10 +5,10 @@ require_once __DIR__ . '/../app/bootstrap.php';
 
 use App\Core\Csrf;
 use App\Core\ValidationException;
+use App\Repositories\ProcedimentoRepository;
 use App\Repositories\ProcessoAdministrativoRepository;
 use App\Repositories\ProcessoJudicialRepository;
 use App\Services\ProcessoAdministrativoService;
-use App\Validators\Normalizador;
 use App\Validators\ProtocoloValidator;
 
 $servico = new ProcessoAdministrativoService();
@@ -17,7 +17,7 @@ $dados = [
     'protocolo'     => entrada('protocolo', $_GET),
     'data_abertura' => '',
     'objeto'        => '',
-    'procedimento'  => '',
+    'procedimento_id' => '',
     'origem'        => 'MANUAL',
     'data_extracao' => '',
     'url_origem'    => '',
@@ -25,11 +25,9 @@ $dados = [
 ];
 $judiciaisSelecionados = [];
 $eventos = [];
-$procedimentosSugeridos = array_unique(array_merge(
-    Normalizador::PROCEDIMENTOS_SUGERIDOS,
-    (new ProcessoAdministrativoRepository())->procedimentosDistintos()
-));
-sort($procedimentosSugeridos, SORT_FLAG_CASE | SORT_STRING);
+// Procedimento: somente itens ativos do catálogo (Configurações > Procedimentos).
+$procedimentosAtivos = (new ProcedimentoRepository())->opcoesAtivas();
+$procedimentoObrigatorio = $procedimentosAtivos !== [];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     Csrf::exigir();
@@ -38,8 +36,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'protocolo'     => entrada('protocolo'),
         'data_abertura' => entrada('data_abertura'),
         'objeto'        => entrada('objeto'),
-        'procedimento'  => entrada('procedimento'),
-        'prazo'         => entrada('prazo'),
+        'procedimento_id' => entrada('procedimento_id'),
+        'prazo'        => entrada('prazo'),
         'prazo_hora'    => entrada('prazo_hora'),
         'origem'        => entrada('origem') ?: 'MANUAL',
         'data_extracao' => entrada('data_extracao'),
@@ -167,23 +165,7 @@ require APP_ROOT . '/Views/layout/cabecalho.php';
                     <?php endif; ?>
                 </div>
 
-                <div class="campo campo--5">
-                    <label class="campo__rotulo" for="procedimento">Procedimento</label>
-                    <input class="input <?= isset($erros['procedimento']) ? 'is-invalido' : '' ?>"
-                           type="text" id="procedimento" name="procedimento" list="listaProcedimentos"
-                           maxlength="160" value="<?= e($dados['procedimento']) ?>"
-                           placeholder="Ex.: Fornecimento de Produto de Saúde" autocomplete="off">
-                    <datalist id="listaProcedimentos">
-                        <?php foreach ($procedimentosSugeridos as $sugestao): ?>
-                            <option value="<?= e($sugestao) ?>">
-                        <?php endforeach; ?>
-                    </datalist>
-                    <?php if (isset($erros['procedimento'])): ?>
-                        <span class="campo__erro"><?= e($erros['procedimento']) ?></span>
-                    <?php else: ?>
-                        <span class="campo__ajuda">Selecione uma sugestão ou digite outro procedimento.</span>
-                    <?php endif; ?>
-                </div>
+                <?php require APP_ROOT . '/Views/partials/campo-procedimento.php'; ?>
 
                 <?php require APP_ROOT . '/Views/partials/campos-prazo-pa.php'; ?>
 

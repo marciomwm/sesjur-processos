@@ -3,6 +3,10 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Core\Auth;
+use App\Core\Database;
+use App\Core\Perfil;
+use App\Core\ValidationException;
 use App\Repositories\ConfiguracaoRepository;
 
 /**
@@ -14,6 +18,9 @@ use App\Repositories\ConfiguracaoRepository;
  */
 final class ConfiguracaoService
 {
+    /** Entidade dos eventos de auditoria das configuracoes. */
+    public const ENTIDADE = 'configuracoes';
+
     private static ?array $cache = null;
 
     /** @return string[] */
@@ -55,6 +62,66 @@ final class ConfiguracaoService
     {
         (new ConfiguracaoRepository())->definir($chave, $valor);
         self::$cache = null;
+    }
+
+    /**
+     * Grava os parametros da integracao com a extensao (somente
+     * administradores), em transacao, registrando na auditoria os valores
+     * anteriores e novos de cada chave alterada. Nenhum parametro e segredo:
+     * sao dominios publicos e um modelo de URL.
+     *
+     * @param array $entrada sigadoc_hosts, pje_hosts, exigir_https (bool), sigadoc_url_template
+     * @return bool false quando nada mudou
+     * @throws ValidationException
+     */
+    public static function salvarIntegracao(array $entrada): bool
+    {
+        Auth::exigirPerfil(Perfil::ADMINISTRADOR);
+
+        $exigirHttps = !empty($entrada['exigir_https']);
+        $template = trim(is_string($entrada['sigadoc_url_template'] ?? null) ? $entrada['sigadoc_url_template'] : '');
+        if ($template !== '') {
+            $esquemaValido = $exigirHttps ? str_starts_with($template, 'https://') : (bool)preg_match('#^https?://#', $template);
+            if (!$esquemaValido || mb_strlen($template) > 500) {
+                throw new ValidationException(['sigadoc_url_template' => $exigirHttps
+                    ? 'Informe uma URL iniciada por https:// (até 500 caracteres).'
+                    : 'Informe uma URL iniciada por http:// ou https:// (até 500 caracteres).']);
+            }
+            if (!str_contains($template, '{protocolo}')) {
+                throw new ValidationException(['sigadoc_url_template' => 'A URL precisa conter {protocolo}, que a extensão substitui pelo protocolo do processo.']);
+            }
+        }
+
+        $novos = [
+            'sigadoc_hosts'        => implode(',', self::normalizarListaHosts((string)($entrada['sigadoc_hosts'] ?? ''))),
+            'pje_hosts'            => implode(',', self::normalizarListaHosts((string)($entrada['pje_hosts'] ?? ''))),
+            'exigir_https'         => $exigirHttps ? '1' : '0',
+            'sigadoc_url_template' => $template,
+        ];
+
+        return Database::transacao(function () use ($novos): bool {
+            $repo = new ConfiguracaoRepository();
+            $atuais = array_map(static fn(array $l): ?string => $l['valor'], $repo->todas());
+            $antes = array_intersect_key($atuais, $novos) + array_fill_keys(array_keys($novos), null);
+            [$anteriores, $alterados] = AuditoriaService::diferencas($antes, $novos);
+            if ($alterados === []) {
+                return false;
+            }
+            foreach ($alterados as $chave => $valor) {
+                $repo->definir($chave, $valor);
+            }
+            (new AuditoriaService())->registrar('CONFIGURACAO_ALTERADA', self::ENTIDADE, null, $anteriores, $alterados);
+            self::$cache = null;
+            return true;
+        });
+    }
+
+    /** Versao da extensao distribuida com a aplicacao (chrome-extension/manifest.json). */
+    public static function versaoExtensaoDistribuida(): ?string
+    {
+        $manifesto = @file_get_contents(PROJECT_ROOT . '/chrome-extension/manifest.json');
+        $dados = is_string($manifesto) ? json_decode($manifesto, true) : null;
+        return is_array($dados) && is_string($dados['version'] ?? null) ? $dados['version'] : null;
     }
 
     /** Normaliza uma lista de hosts digitada pelo usuario. */

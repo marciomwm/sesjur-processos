@@ -68,4 +68,21 @@ final class AuditoriaRepository
         $stmt->execute();
         return $stmt->fetchAll();
     }
+
+    /** Eventos de uma entidade sem registro proprio (ex.: configuracoes), do mais recente ao mais antigo. */
+    public function listarPorEntidadeSemId(string $entidade, int $limite = 30): array
+    {
+        $stmt = $this->db->prepare(
+            'SELECT a.*, u.nome AS autor_nome
+               FROM auditoria a
+               LEFT JOIN usuarios u ON u.id = a.usuario_id
+              WHERE a.entidade = :entidade AND a.entidade_id IS NULL
+              ORDER BY a.id DESC
+              LIMIT :limite'
+        );
+        $stmt->bindValue(':entidade', $entidade);
+        $stmt->bindValue(':limite', $limite, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetchAll();
+    }
 }

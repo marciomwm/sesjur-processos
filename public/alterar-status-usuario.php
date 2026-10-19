@@ -17,7 +17,7 @@ use App\Services\UsuarioService;
 use App\Validators\UsuarioValidator;
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    redirecionar('usuarios.php');
+    redirecionar('configuracoes.php?aba=usuarios');
 }
 Csrf::exigir();
 
@@ -30,11 +30,11 @@ parse_str(entrada('retorno'), $retorno);
 $retorno = array_intersect_key($retorno, array_flip(['busca', 'cargo_id', 'lotacao_id', 'perfil', 'status', 'pagina']));
 $destino = entrada('origem') === 'ficha' && $id !== null
     ? 'usuario.php?id=' . $id
-    : 'usuarios.php' . ($retorno !== [] ? '?' . http_build_query($retorno) : '');
+    : 'configuracoes.php?' . http_build_query(['aba' => 'usuarios'] + $retorno);
 
 if ($id === null || $ativo === null) {
     flash('erro', 'Requisição inválida.');
-    redirecionar('usuarios.php');
+    redirecionar('configuracoes.php?aba=usuarios');
 }
 
 try {

@@ -72,9 +72,9 @@ final class PesquisaService
         $grupos = [
             'administrativos' => $this->grupo(
                 'Processos Administrativos',
-                'processos_administrativos pa',
-                ['pa.protocolo', 'pa.objeto', 'pa.procedimento', 'pa.responsavel_nome'],
-                'pa.id, pa.protocolo, pa.objeto, pa.procedimento, pa.ativo',
+                'processos_administrativos pa LEFT JOIN procedimentos pr ON pr.id = pa.procedimento_id',
+                ['pa.protocolo', 'pa.objeto', 'pr.nome', 'pa.procedimento', 'pa.responsavel_nome'],
+                'pa.id, pa.protocolo, pa.objeto, COALESCE(pr.nome, pa.procedimento) AS procedimento, pa.ativo',
                 'pa.protocolo',
                 $like,
                 $limite,

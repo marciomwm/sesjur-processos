@@ -93,12 +93,6 @@ $ehAdmin     = Auth::ehAdministrador();
                 <a class="sidebar__item <?= $menuAtivo === 'agentes' ? 'is-ativo' : '' ?>" href="<?= e(url('agentes-publicos.php')) ?>">
                     <span class="sidebar__icone">🧑‍💼</span> Agentes Públicos
                 </a>
-                <a class="sidebar__item <?= $menuAtivo === 'usuarios' ? 'is-ativo' : '' ?>" href="<?= e(url('usuarios.php')) ?>">
-                    <span class="sidebar__icone">👤</span> Usuários
-                </a>
-                <a class="sidebar__item <?= $menuAtivo === 'prioridades' ? 'is-ativo' : '' ?>" href="<?= e(url('prioridades.php')) ?>">
-                    <span class="sidebar__icone">⚑</span> Prioridades
-                </a>
                 <a class="sidebar__item <?= $menuAtivo === 'cargos' ? 'is-ativo' : '' ?>" href="<?= e(url('tabela-apoio.php?tipo=cargos')) ?>">
                     <span class="sidebar__icone">🏷</span> Cargos
                 </a>
@@ -114,7 +108,8 @@ $ehAdmin     = Auth::ehAdministrador();
                 <a class="sidebar__item <?= $menuAtivo === 'instituicoes-externas' ? 'is-ativo' : '' ?>" href="<?= e(url('tabela-apoio.php?tipo=instituicoes_externas')) ?>">
                     <span class="sidebar__icone">⌂</span> Instituições Externas
                 </a>
-                <a class="sidebar__item <?= $menuAtivo === 'config' ? 'is-ativo' : '' ?>" href="<?= e(url('configuracoes.php')) ?>">
+                <a class="sidebar__item <?= $menuAtivo === 'config' ? 'is-ativo' : '' ?>" href="<?= e(url('configuracoes.php')) ?>"
+                   title="Usuários, Extensão, Procedimentos e Prioridades">
                     <span class="sidebar__icone">⚙</span> Configurações
                 </a>
             <?php endif; ?>

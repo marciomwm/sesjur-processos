@@ -12,14 +12,36 @@
         const botao   = document.getElementById('btnSincronizarExtensao');
         const saida   = document.getElementById('statusSincronizacao');
 
+        const distribuida = document.getElementById('versaoDistribuida');
+        const situacao = document.getElementById('situacaoVersao');
+
         if (status) {
             const ping = await GJ.extensao.ping();
             if (ping && ping.success) {
+                const instalada = (ping.data && ping.data.version) || '';
                 status.innerHTML = '<span class="badge badge--verde">Conectada</span>';
-                if (versao) versao.textContent = (ping.data && ping.data.version) || '—';
+                if (versao) versao.textContent = instalada || '—';
+                if (situacao && distribuida && distribuida.dataset.versao && instalada) {
+                    const cmp = compararVersoes(instalada, distribuida.dataset.versao);
+                    situacao.innerHTML = cmp >= 0
+                        ? '<span class="badge badge--verde">Atualizada</span>'
+                        : '<span class="badge badge--ambar">Desatualizada</span> Recarregue a extensão em chrome://extensions.';
+                }
             } else {
                 status.innerHTML = '<span class="badge badge--vermelho">Não detectada</span>';
+                if (situacao) situacao.textContent = 'Instale ou ative a extensão neste navegador.';
             }
+        }
+
+        /** -1, 0 ou 1 comparando "1.4.0" com "1.10.2" numericamente. */
+        function compararVersoes(a, b) {
+            const pa = String(a).split('.').map(Number);
+            const pb = String(b).split('.').map(Number);
+            for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
+                const d = (pa[i] || 0) - (pb[i] || 0);
+                if (d !== 0) return d > 0 ? 1 : -1;
+            }
+            return 0;
         }
 
         if (!botao) return;

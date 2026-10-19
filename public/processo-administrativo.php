@@ -241,7 +241,19 @@ require APP_ROOT . '/Views/layout/cabecalho.php';
             </div>
             <div class="definicao">
                 <span class="definicao__rotulo">Procedimento</span>
-                <span class="definicao__valor"><?= ou_traco($registro['procedimento'] ?? null) ?></span>
+                <span class="definicao__valor">
+                    <?php if (!empty($registro['procedimento_nome'])): ?>
+                        <?= e($registro['procedimento_nome']) ?>
+                        <?php if ((int)$registro['procedimento_ativo'] !== 1): ?>
+                            <span class="badge badge--neutro" title="Inativado no catálogo; a classificação do processo é mantida">Inativo</span>
+                        <?php endif; ?>
+                    <?php elseif (($registro['procedimento'] ?? '') !== ''): ?>
+                        <?= e($registro['procedimento']) ?>
+                        <br><span class="texto-secundario">Classificação anterior (texto livre), não vinculada ao catálogo</span>
+                    <?php else: ?>
+                        <span class="texto-secundario">—</span>
+                    <?php endif; ?>
+                </span>
             </div>
             <div class="definicao">
                 <span class="definicao__rotulo">Prazo do processo</span>
@@ -510,7 +522,7 @@ require APP_ROOT . '/Views/partials/designacao.php';
             <p class="card__subtitulo">Características do processo que pedem atenção preferencial · nível de 1 (baixa) a 5 (máxima)</p>
         </div>
         <?php if (Auth::ehAdministrador()): ?>
-            <a class="btn btn--ghost btn--sm" href="<?= e(url('prioridades.php')) ?>">Gerenciar prioridades</a>
+            <a class="btn btn--ghost btn--sm" href="<?= e(url('configuracoes.php?aba=prioridades')) ?>">Gerenciar prioridades</a>
         <?php endif; ?>
     </div>
     <div class="card__corpo">

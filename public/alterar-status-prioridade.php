@@ -14,7 +14,7 @@ use App\Services\PrioridadeService;
 use App\Validators\UsuarioValidator;
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    redirecionar('prioridades.php');
+    redirecionar('configuracoes.php?aba=prioridades');
 }
 Csrf::exigir();
 
@@ -23,8 +23,8 @@ $ativo = UsuarioValidator::ativo(entrada('ativo'));
 
 // Retorno para a listagem com os mesmos filtros (apenas chaves conhecidas).
 parse_str(entrada('retorno'), $retorno);
-$retorno = array_intersect_key($retorno, array_flip(['busca', 'nivel', 'status']));
-$destino = 'prioridades.php' . ($retorno !== [] ? '?' . http_build_query($retorno) : '');
+$retorno = array_intersect_key($retorno, array_flip(['busca', 'nivel', 'status', 'pagina']));
+$destino = 'configuracoes.php?' . http_build_query(['aba' => 'prioridades'] + $retorno);
 
 if ($id === null || $ativo === null) {
     flash('erro', 'Requisição inválida.');

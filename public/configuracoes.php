@@ -1,6 +1,16 @@
 <?php
 declare(strict_types=1);
 
+/**
+ * Configuracoes do Sistema: area administrativa centralizada, em guias
+ *   configuracoes.php?aba=usuarios | extensao | procedimentos | prioridades
+ *
+ * Somente administradores: verificado aqui e novamente em cada servico.
+ * Cada guia reaproveita os repositorios, servicos e endpoints ja existentes
+ * (novo-usuario.php, alterar-status-*.php, editar-*.php); as antigas
+ * usuarios.php e prioridades.php redirecionam para a guia correspondente.
+ */
+
 require_once __DIR__ . '/../app/bootstrap.php';
 
 // Somente administradores.
@@ -8,178 +18,187 @@ App\Core\Auth::exigirPerfil(App\Core\Perfil::ADMINISTRADOR);
 
 use App\Core\Csrf;
 use App\Core\Database;
+use App\Core\Perfil;
+use App\Core\ValidationException;
+use App\Repositories\AuditoriaRepository;
+use App\Repositories\CargoRepository;
+use App\Repositories\LotacaoRepository;
+use App\Repositories\PrioridadeRepository;
+use App\Repositories\ProcedimentoRepository;
+use App\Repositories\UsuarioRepository;
 use App\Services\ConfiguracaoService;
+use App\Services\PrioridadeService;
+use App\Services\ProcedimentoService;
 
-$conexao = Database::testar();
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    Csrf::exigir();
-
-    if (!$conexao['ok']) {
-        flash('erro', 'Não é possível salvar: banco de dados indisponível.');
-        redirecionar('configuracoes.php');
-    }
-
-    try {
-        $sigadoc = ConfiguracaoService::normalizarListaHosts((string)($_POST['sigadoc_hosts'] ?? ''));
-        $pje     = ConfiguracaoService::normalizarListaHosts((string)($_POST['pje_hosts'] ?? ''));
-
-        ConfiguracaoService::salvar('sigadoc_hosts', implode(',', $sigadoc));
-        ConfiguracaoService::salvar('pje_hosts', implode(',', $pje));
-        ConfiguracaoService::salvar('exigir_https', isset($_POST['exigir_https']) ? '1' : '0');
-        ConfiguracaoService::salvar('sigadoc_url_template', trim((string)($_POST['sigadoc_url_template'] ?? '')));
-
-        flash('sucesso', 'Configurações salvas. Sincronize a allowlist com a extensão para que os novos domínios sejam aceitos.');
-    } catch (Throwable $e) {
-        flash('erro', 'Não foi possível salvar: ' . $e->getMessage());
-    }
-    redirecionar('configuracoes.php');
+$abas = [
+    'usuarios'      => ['rotulo' => 'Usuários',      'icone' => '👤'],
+    'extensao'      => ['rotulo' => 'Extensão',      'icone' => '🧩'],
+    'procedimentos' => ['rotulo' => 'Procedimentos', 'icone' => '📋'],
+    'prioridades'   => ['rotulo' => 'Prioridades',   'icone' => '⚑'],
+];
+$aba = entrada('aba', $_GET);
+if (!isset($abas[$aba])) {
+    $aba = 'usuarios';
 }
 
-$diagnostico = ConfiguracaoService::diagnostico();
+$erros = [];
+$porPagina = (int)config('app.itens_por_pagina', 20);
+$pagina    = entrada_int('pagina') ?? 1;
+$status    = entrada('status', $_GET);
+$statusTabela = in_array($status, ['ativos', 'inativos', 'todos'], true) ? $status : 'todos';
 
-$titulo      = 'Configurações';
+// ---------------------------------------------------------------------
+// Gravações (POST na própria guia, com CSRF). Sucesso: redireciona (PRG).
+// ---------------------------------------------------------------------
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    Csrf::exigir();
+    try {
+        switch ($aba) {
+            case 'extensao':
+                $alterou = ConfiguracaoService::salvarIntegracao([
+                    'sigadoc_hosts'        => (string)($_POST['sigadoc_hosts'] ?? ''),
+                    'pje_hosts'            => (string)($_POST['pje_hosts'] ?? ''),
+                    'exigir_https'         => isset($_POST['exigir_https']),
+                    'sigadoc_url_template' => (string)($_POST['sigadoc_url_template'] ?? ''),
+                ]);
+                flash($alterou ? 'sucesso' : 'info', $alterou
+                    ? 'Configurações salvas. Sincronize a allowlist com a extensão para que os novos domínios sejam aceitos.'
+                    : 'Nenhuma alteração para salvar.');
+                break;
+            case 'procedimentos':
+                $dados = ['nome' => entrada('nome'), 'descricao' => (string)($_POST['descricao'] ?? '')];
+                (new ProcedimentoService())->criar($dados);
+                flash('sucesso', 'Procedimento “' . trim(preg_replace('/\s+/u', ' ', $dados['nome']) ?? '') . '” cadastrado com sucesso.');
+                break;
+            case 'prioridades':
+                $dados = ['nome' => entrada('nome'), 'nivel' => entrada('nivel'), 'descricao' => (string)($_POST['descricao'] ?? '')];
+                (new PrioridadeService())->criar($dados);
+                flash('sucesso', 'Prioridade “' . trim($dados['nome']) . '” cadastrada com sucesso.');
+                break;
+            default:
+                flash('erro', 'Operação não disponível nesta guia.');
+        }
+        redirecionar('configuracoes.php?aba=' . $aba);
+    } catch (ValidationException $e) {
+        $erros = $e->erros() ?: ['_geral' => $e->getMessage()];
+    } catch (Throwable $e) {
+        $codigo = log_erro($e, 'configuracoes.' . $aba);
+        $erros['_geral'] = "Não foi possível salvar. Se o problema persistir, informe o código {$codigo} ao suporte.";
+    }
+}
+
+// ---------------------------------------------------------------------
+// Dados da guia ativa. $query guarda os filtros (paginação e retorno).
+// ---------------------------------------------------------------------
+$query = ['aba' => $aba];
+$erroCarga = null;
+$scripts = [];
+
+try {
+    switch ($aba) {
+        case 'usuarios':
+            $statusUsuario = array_key_exists($status, UsuarioRepository::STATUS) ? $status : 'ativos';
+            $filtros = [
+                'busca'      => mb_substr(entrada('busca', $_GET), 0, 150),
+                'cargo_id'   => entrada_int('cargo_id'),
+                'lotacao_id' => entrada_int('lotacao_id'),
+                'perfil'     => Perfil::valido(entrada('perfil', $_GET)) ? entrada('perfil', $_GET) : '',
+                'status'     => $statusUsuario,
+            ];
+            $paginacao = (new UsuarioRepository())->listar($filtros, $pagina, $porPagina);
+            $cargos    = (new CargoRepository())->todos();
+            $lotacoes  = (new LotacaoRepository())->todos();
+            $query += array_filter($filtros, static fn($v) => $v !== null && $v !== '');
+            break;
+
+        case 'extensao':
+            $conexao = Database::testar();
+            $diagnostico = ConfiguracaoService::diagnostico();
+            if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+                // Reexibe o que foi digitado quando a validação falha.
+                $diagnostico['sigadoc_hosts'] = ConfiguracaoService::normalizarListaHosts((string)($_POST['sigadoc_hosts'] ?? ''));
+                $diagnostico['pje_hosts'] = ConfiguracaoService::normalizarListaHosts((string)($_POST['pje_hosts'] ?? ''));
+                $diagnostico['exigir_https'] = isset($_POST['exigir_https']);
+                $diagnostico['sigadoc_url_template'] = trim((string)($_POST['sigadoc_url_template'] ?? ''));
+            }
+            $versaoDistribuida = ConfiguracaoService::versaoExtensaoDistribuida();
+            $historico = (new AuditoriaRepository())->listarPorEntidadeSemId(ConfiguracaoService::ENTIDADE, 20);
+            $scripts[] = 'configuracoes.js';
+            break;
+
+        case 'procedimentos':
+            $filtros = [
+                'busca'   => mb_substr(entrada('busca', $_GET), 0, 150),
+                'status'  => $statusTabela,
+                'direcao' => entrada('direcao', $_GET) === 'desc' ? 'desc' : 'asc',
+            ];
+            $paginacao = (new ProcedimentoRepository())->listar($filtros, $pagina, $porPagina);
+            $query += array_filter($filtros, static fn($v) => $v !== '' && $v !== 'todos' && $v !== 'asc');
+            $dados = $_SERVER['REQUEST_METHOD'] === 'POST'
+                ? ['nome' => entrada('nome'), 'descricao' => (string)($_POST['descricao'] ?? '')]
+                : ['nome' => '', 'descricao' => ''];
+            break;
+
+        case 'prioridades':
+            $filtros = [
+                'busca'  => mb_substr(entrada('busca', $_GET), 0, 150),
+                'nivel'  => (string)(PrioridadeService::nivel(entrada('nivel', $_GET)) ?? ''),
+                'status' => $statusTabela,
+            ];
+            $paginacao = (new PrioridadeRepository())->listar([
+                'busca'  => $filtros['busca'],
+                'nivel'  => $filtros['nivel'] !== '' ? (int)$filtros['nivel'] : null,
+                'status' => $filtros['status'],
+            ], $pagina, $porPagina);
+            $query += array_filter($filtros, static fn($v) => $v !== '' && $v !== 'todos');
+            $dados = $_SERVER['REQUEST_METHOD'] === 'POST'
+                ? ['nome' => entrada('nome'), 'nivel' => entrada('nivel'), 'descricao' => (string)($_POST['descricao'] ?? '')]
+                : ['nome' => '', 'nivel' => '', 'descricao' => ''];
+            break;
+    }
+} catch (Throwable $e) {
+    $codigo = log_erro($e, 'configuracoes.' . $aba . '.listar');
+    $erroCarga = "Não foi possível carregar esta guia. Se o problema persistir, informe o código {$codigo} ao suporte.";
+}
+if ($pagina > 1) {
+    $query['pagina'] = $pagina;
+}
+/** Endereço da guia com filtros (sempre interno). */
+$urlAba = static fn(array $params = []): string => url('configuracoes.php?' . http_build_query(['aba' => $aba] + $params));
+
+$titulo      = 'Configurações do Sistema';
 $menuAtivo   = 'config';
-$breadcrumbs = ['Sistema' => null, 'Configurações' => null];
-$scripts     = ['configuracoes.js'];
+$breadcrumbs = ['Sistema' => null, 'Configurações' => 'configuracoes.php', $abas[$aba]['rotulo'] => null];
 
 require APP_ROOT . '/Views/layout/cabecalho.php';
 ?>
 
-<section class="card">
-    <div class="card__cabecalho">
-        <div>
-            <h2 class="card__titulo">Domínios institucionais autorizados</h2>
-            <p class="card__subtitulo">Princípio do menor privilégio: a extensão só acessa os domínios listados aqui e o localhost da aplicação</p>
-        </div>
+<section class="config-cabecalho">
+    <div>
+        <h2 class="config-cabecalho__titulo">Configurações do Sistema</h2>
+        <p class="config-cabecalho__descricao">Gerencie usuários, integrações, procedimentos e critérios de prioridade do SESJUR.</p>
     </div>
-    <form method="post">
-        <?= Csrf::campo() ?>
-        <div class="card__corpo">
-            <div class="alert alert--info">
-                <span class="alert__icone">ℹ</span>
-                <div>
-                    Informe apenas os domínios (sem <code>https://</code> e sem caminho). Um por linha ou separados por vírgula.
-                    Subdomínios de um domínio autorizado também são aceitos.<br>
-                    <strong>Estes valores não vêm preenchidos:</strong> nenhum domínio do SIGADOC ou do PJe é presumido pelo sistema.
-                </div>
-            </div>
-
-            <div class="form-grid">
-                <div class="campo campo--6">
-                    <label class="campo__rotulo" for="sigadoc_hosts">Domínios do SIGADOC</label>
-                    <textarea class="textarea mono" id="sigadoc_hosts" name="sigadoc_hosts" rows="4"
-                              placeholder="sigadoc.exemplo.gov.br"><?= e(implode("\n", $diagnostico['sigadoc_hosts'])) ?></textarea>
-                    <span class="campo__ajuda">
-                        <?= $diagnostico['sigadoc_pronto']
-                            ? '<span class="badge badge--verde">Configurado</span>'
-                            : '<span class="badge badge--ambar">Pendente</span>' ?>
-                    </span>
-                </div>
-                <div class="campo campo--6">
-                    <label class="campo__rotulo" for="pje_hosts">Domínios do PJe</label>
-                    <textarea class="textarea mono" id="pje_hosts" name="pje_hosts" rows="4"
-                              placeholder="pje.exemplo.jus.br"><?= e(implode("\n", $diagnostico['pje_hosts'])) ?></textarea>
-                    <span class="campo__ajuda">
-                        <?= $diagnostico['pje_pronto']
-                            ? '<span class="badge badge--verde">Configurado</span>'
-                            : '<span class="badge badge--ambar">Pendente</span>' ?>
-                    </span>
-                </div>
-                <div class="campo">
-                    <label class="campo__rotulo" for="sigadoc_url_template">Consulta direta no SIGADOC (opcional)</label>
-                    <input class="input mono" type="text" id="sigadoc_url_template" name="sigadoc_url_template"
-                           value="<?= e($diagnostico['sigadoc_url_template']) ?>"
-                           placeholder="https://{host}/sigaex/app/expediente/doc/exibir?sigla={protocolo}">
-                    <span class="campo__ajuda">
-                        Permite que a extensão abra a página do processo diretamente, sem depender de uma aba já aberta.
-                        Substituições: <code>{host}</code> e <code>{protocolo}</code>.
-                        Em branco, a extensão usa o padrão observado no SIGA-DOC.
-                    </span>
-                </div>
-                <div class="campo">
-                    <label class="checkbox-linha">
-                        <input type="checkbox" name="exigir_https" value="1" <?= $diagnostico['exigir_https'] ? 'checked' : '' ?>>
-                        Exigir HTTPS nas URLs externas (recomendado)
-                    </label>
-                </div>
-            </div>
-        </div>
-        <div class="card__rodape">
-            <button type="submit" class="btn btn--primario" <?= $conexao['ok'] ? '' : 'disabled' ?>>💾 Salvar configurações</button>
-            <button type="button" class="btn btn--secundario" id="btnSincronizarExtensao">⟳ Sincronizar com a extensão</button>
-            <span id="statusSincronizacao" class="texto-secundario"></span>
-        </div>
-    </form>
 </section>
 
-<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:var(--densidade-secao)">
-    <section class="card">
-        <div class="card__cabecalho"><h2 class="card__titulo">Banco de dados</h2></div>
-        <div class="card__corpo">
-            <div class="definicoes">
-                <div class="definicao"><span class="definicao__rotulo">Status</span>
-                    <span class="definicao__valor">
-                        <?= $conexao['ok']
-                            ? '<span class="badge badge--verde">Conectado</span>'
-                            : '<span class="badge badge--vermelho">Indisponível</span>' ?>
-                    </span>
-                </div>
-                <div class="definicao"><span class="definicao__rotulo">Servidor</span>
-                    <span class="definicao__valor"><?= e((string)config('db.host')) ?>:<?= e((string)config('db.port')) ?></span>
-                </div>
-                <div class="definicao"><span class="definicao__rotulo">Banco</span>
-                    <span class="definicao__valor mono"><?= e((string)config('db.database')) ?></span>
-                </div>
-                <div class="definicao"><span class="definicao__rotulo">Versão</span>
-                    <span class="definicao__valor"><?= e($conexao['ok'] ? $conexao['versao'] : ($conexao['erro'] ?? '—')) ?></span>
-                </div>
-            </div>
-        </div>
-    </section>
+<nav class="abas config-abas" aria-label="Guias de configuração">
+    <?php foreach ($abas as $chave => $info): ?>
+        <a class="abas__item <?= $chave === $aba ? 'is-ativo' : '' ?>" href="<?= e(url('configuracoes.php?aba=' . $chave)) ?>"
+           <?= $chave === $aba ? 'aria-current="page"' : '' ?>>
+            <span aria-hidden="true"><?= $info['icone'] ?></span> <?= e($info['rotulo']) ?>
+        </a>
+    <?php endforeach; ?>
+</nav>
 
-    <section class="card">
-        <div class="card__cabecalho"><h2 class="card__titulo">Extensão do Chrome</h2></div>
-        <div class="card__corpo">
-            <div class="definicoes">
-                <div class="definicao"><span class="definicao__rotulo">Detecção</span>
-                    <span class="definicao__valor" id="statusExtensaoConfig">verificando…</span>
-                </div>
-                <div class="definicao"><span class="definicao__rotulo">Versão</span>
-                    <span class="definicao__valor" id="versaoExtensao">—</span>
-                </div>
-                <div class="definicao definicao--larga"><span class="definicao__rotulo">Instalação</span>
-                    <span class="definicao__valor">
-                        Abra <code>chrome://extensions</code>, ative o <strong>Modo do desenvolvedor</strong> e use
-                        <strong>Carregar sem compactação</strong> apontando para a pasta <code>chrome-extension/</code> do projeto.
-                    </span>
-                </div>
-                <div class="definicao definicao--larga"><span class="definicao__rotulo">Permissões de domínio</span>
-                    <span class="definicao__valor">
-                        A extensão pede autorização para cada domínio institucional na própria página de opções
-                        (<em>Detalhes → Opções da extensão</em>). Nenhum acesso global é solicitado.
-                    </span>
-                </div>
-            </div>
-        </div>
-    </section>
+<?php if (isset($erros['_geral'])): ?>
+    <div class="alert alert--erro" role="alert"><span class="alert__icone">✕</span><span><?= e($erros['_geral']) ?></span></div>
+<?php endif; ?>
+
+<div class="config-painel" id="painel-<?= e($aba) ?>">
+    <?php if ($erroCarga !== null): ?>
+        <div class="alert alert--erro" role="alert"><span class="alert__icone">✕</span><span><?= e($erroCarga) ?></span></div>
+    <?php else: ?>
+        <?php require APP_ROOT . '/Views/configuracoes/' . $aba . '.php'; ?>
+    <?php endif; ?>
 </div>
-
-<section class="card">
-    <div class="card__cabecalho"><h2 class="card__titulo">Estado do mapeamento de DOM</h2></div>
-    <div class="card__corpo">
-        <p class="texto-secundario">
-            Os extratores só funcionam depois que os seletores reais das páginas do SIGADOC e do PJe forem mapeados.
-            Os seletores ficam centralizados em <code>chrome-extension/config/selectors.js</code> e são versionados.
-            Enquanto não estiverem preenchidos, o extrator tenta a estratégia por rótulo (label/dt-dd/tabela) e
-            retorna <code>SELECTORS_NOT_CONFIGURED</code> quando nada é localizado — nunca fabrica valores.
-        </p>
-        <p class="texto-secundario mb-0">
-            Para concluir o mapeamento, salve o HTML de uma página real (Ctrl+S ou “Copiar outerHTML”), anonimize os dados
-            pessoais e coloque o arquivo em <code>tests/fixtures/sigadoc/</code> ou <code>tests/fixtures/pje/</code>.
-            Consulte a seção “Mapeamento do DOM” no README.
-        </p>
-    </div>
-</section>
 
 <?php require APP_ROOT . '/Views/layout/rodape.php'; ?>

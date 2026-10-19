@@ -16,14 +16,14 @@ use App\Core\ValidationException;
 use App\Services\AuthService;
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    redirecionar('usuarios.php');
+    redirecionar('configuracoes.php?aba=usuarios');
 }
 Csrf::exigir();
 
 $id = entrada_int('id', $_POST);
 if ($id === null) {
     flash('erro', 'Usuário não informado.');
-    redirecionar('usuarios.php');
+    redirecionar('configuracoes.php?aba=usuarios');
 }
 if ($id === usuario_logado_id()) {
     flash('info', 'Para trocar a sua própria senha, use “Alterar senha”.');

@@ -28,9 +28,15 @@ final class ProcessoAdministrativoRepository
         $this->db = $db ?? Database::conexao();
     }
 
+    /** Registro com o nome e o status do procedimento do catalogo (procedimento_nome, procedimento_ativo). */
     public function buscarPorId(int $id): ?array
     {
-        $stmt = $this->db->prepare('SELECT * FROM processos_administrativos WHERE id = :id');
+        $stmt = $this->db->prepare(
+            'SELECT pa.*, pr.nome AS procedimento_nome, pr.ativo AS procedimento_ativo
+               FROM processos_administrativos pa
+               LEFT JOIN procedimentos pr ON pr.id = pa.procedimento_id
+              WHERE pa.id = :id'
+        );
         $stmt->execute([':id' => $id]);
         $linha = $stmt->fetch();
         return $linha ?: null;
@@ -60,10 +66,10 @@ final class ProcessoAdministrativoRepository
     public function inserir(array $dados): int
     {
         $sql = 'INSERT INTO processos_administrativos
-                (protocolo, data_abertura, objeto, procedimento, origem, url_origem, extrator_versao, data_extracao,
+                (protocolo, data_abertura, objeto, procedimento, procedimento_id, origem, url_origem, extrator_versao, data_extracao,
                  situacao, situacao_descricao, responsavel_nome, responsavel_matricula,
                  responsavel_lotacao, responsavel_lotacao_nome, prazo, prazo_hora)
-                VALUES (:protocolo, :data_abertura, :objeto, :procedimento, :origem, :url_origem, :extrator_versao, :data_extracao,
+                VALUES (:protocolo, :data_abertura, :objeto, :procedimento, :procedimento_id, :origem, :url_origem, :extrator_versao, :data_extracao,
                  :situacao, :situacao_descricao, :responsavel_nome, :responsavel_matricula,
                  :responsavel_lotacao, :responsavel_lotacao_nome, :prazo, :prazo_hora)';
         $stmt = $this->db->prepare($sql);
@@ -79,6 +85,7 @@ final class ProcessoAdministrativoRepository
             ':data_abertura'            => $dados['data_abertura'],
             ':objeto'                   => $dados['objeto'],
             ':procedimento'             => $dados['procedimento'] ?? null,
+            ':procedimento_id'          => $dados['procedimento_id'] ?? null,
             ':origem'                   => $dados['origem'] ?? 'MANUAL',
             ':url_origem'               => $dados['url_origem'] ?? null,
             ':extrator_versao'          => $dados['extrator_versao'] ?? null,
@@ -101,6 +108,7 @@ final class ProcessoAdministrativoRepository
                     data_abertura = :data_abertura,
                     objeto = :objeto,
                     procedimento = :procedimento,
+                    procedimento_id = :procedimento_id,
                     origem = :origem,
                     url_origem = :url_origem,
                     extrator_versao = :extrator_versao,
@@ -161,6 +169,7 @@ final class ProcessoAdministrativoRepository
 
         $offset = max(0, ($pagina - 1) * $porPagina);
         $sql = "SELECT pa.*,
+                       (SELECT pr.nome FROM procedimentos pr WHERE pr.id = pa.procedimento_id) AS procedimento_nome,
                        (SELECT COUNT(*) FROM processo_administrativo_judicial v
                          WHERE v.processo_administrativo_id = pa.id) AS total_vinculos,
                        (SELECT COUNT(*) FROM processo_administrativo_acoes ac
@@ -195,10 +204,21 @@ final class ProcessoAdministrativoRepository
         if ($busca !== '') {
             // Placeholders distintos: com prepared statements nativos (sem
             // emulacao) um mesmo nome nao pode ser reaproveitado.
-            $condicoes[] = '(pa.protocolo LIKE :busca_protocolo OR pa.objeto LIKE :busca_objeto OR pa.procedimento LIKE :busca_procedimento)';
+            $condicoes[] = '(pa.protocolo LIKE :busca_protocolo OR pa.objeto LIKE :busca_objeto OR pa.procedimento LIKE :busca_procedimento
+                             OR EXISTS (SELECT 1 FROM procedimentos prb WHERE prb.id = pa.procedimento_id AND prb.nome LIKE :busca_catalogo))';
             $params[':busca_protocolo'] = '%' . $busca . '%';
             $params[':busca_objeto']    = '%' . $busca . '%';
             $params[':busca_procedimento'] = '%' . $busca . '%';
+            $params[':busca_catalogo'] = '%' . $busca . '%';
+        }
+
+        // Procedimento do catalogo (ativo ou inativo: vale para o historico).
+        $procedimentoId = $filtros['procedimento_id'] ?? null;
+        if (is_int($procedimentoId) && $procedimentoId > 0) {
+            $condicoes[] = 'pa.procedimento_id = :procedimento_id';
+            $params[':procedimento_id'] = $procedimentoId;
+        } elseif ($procedimentoId === 'nenhum') {
+            $condicoes[] = 'pa.procedimento_id IS NULL';
         }
 
         $protocolo = trim((string)($filtros['protocolo'] ?? ''));
@@ -279,16 +299,6 @@ final class ProcessoAdministrativoRepository
         return $stmt->fetchAll();
     }
 
-    /** Procedimentos distintos ja cadastrados, para compor sugestoes de autocomplete. */
-    public function procedimentosDistintos(): array
-    {
-        $stmt = $this->db->query(
-            "SELECT DISTINCT procedimento FROM processos_administrativos
-              WHERE procedimento IS NOT NULL AND procedimento <> ''
-              ORDER BY procedimento"
-        );
-        return $stmt->fetchAll(PDO::FETCH_COLUMN);
-    }
 
     public function contar(): int
     {

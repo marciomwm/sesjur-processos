@@ -180,7 +180,8 @@ final class ExpedienteService
             'processo_administrativo'  => self::texto($pa['protocolo']),
             'pa_data_abertura'         => self::data($pa['data_abertura']),
             'pa_objeto'                => self::texto($pa['objeto']),
-            'pa_procedimento'          => self::texto($pa['procedimento']),
+            // Catalogo; sem item vinculado, a classificacao anterior (texto livre).
+            'pa_procedimento'          => self::texto($pa['procedimento_nome'] ?? $pa['procedimento']),
             'pa_situacao'              => Normalizador::SITUACOES[$situacao] ?? $situacao,
             'pa_situacao_sigadoc'      => self::texto($pa['situacao_descricao']),
             'pa_responsavel'           => self::texto($pa['responsavel_nome']),

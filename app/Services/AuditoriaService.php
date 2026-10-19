@@ -91,6 +91,8 @@ final class AuditoriaService
         'MODELO_EXPEDIENTE_COMPARTILHADO'   => 'Modelo de expediente compartilhado',
         'MODELO_EXPEDIENTE_INDIVIDUALIZADO' => 'Modelo de expediente deixou de ser compartilhado',
         'MODELO_EXPEDIENTE_EXCLUIDO'        => 'Modelo de expediente compartilhado excluído',
+        'CONFIGURACAO_ALTERADA'             => 'Configuração da extensão alterada',
+        'PROCEDIMENTO_CONCILIADO'           => 'Processos antigos vinculados (conciliação)',
     ];
 
     /** Rotulo de exibicao de qualquer acao (USUARIO_EDITADO, LOTACAO_INATIVADA...). */
@@ -119,7 +121,7 @@ final class AuditoriaService
         if (!empty($dados['prioridade'])) {
             $partes[] = $dados['prioridade'] . (isset($dados['nivel']) ? ' (nível ' . $dados['nivel'] . ')' : '');
         }
-        foreach (['protocolo', 'instituicao', 'expediente', 'descricao', 'assunto', 'texto', 'sigtap', 'motivo'] as $chave) {
+        foreach (['protocolo', 'instituicao', 'expediente', 'descricao', 'assunto', 'texto', 'texto_legado', 'sigtap', 'motivo'] as $chave) {
             if (isset($dados[$chave]) && is_scalar($dados[$chave]) && (string)$dados[$chave] !== '') {
                 $partes[] = (string)$dados[$chave];
             }

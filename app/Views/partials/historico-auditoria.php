@@ -31,7 +31,7 @@ $valorAuditoria = $valorAuditoria ?? static fn(string $campo, mixed $valor): str
                     <td class="nowrap"><?= e(datahora_br($h['created_at'])) ?></td>
                     <td class="nowrap"><span class="badge"><?= e(AuditoriaService::rotulo($h['acao'])) ?></span></td>
                     <td>
-                        <?php if (preg_match('/_EDITAD[OA]$/', $h['acao']) && $depois !== []): ?>
+                        <?php if (preg_match('/_(EDITAD[OA]|ALTERADA)$/', $h['acao']) && $depois !== []): ?>
                             <ul class="lista-alteracoes">
                                 <?php foreach (array_diff_key($depois, array_flip(['acao_id', 'solicitacao_id', 'anotacao_id', 'produto_id'])) as $campo => $novo): ?>
                                     <li><strong><?= e($rotulosCampo[$campo] ?? $campo) ?>:</strong>

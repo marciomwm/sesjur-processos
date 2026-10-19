@@ -151,6 +151,25 @@
             });
         });
 
+        // Select longo com pesquisa (ex.: Procedimento): um campo acima filtra
+        // as opções pelo texto; a opção escolhida e a vazia nunca somem.
+        document.querySelectorAll('select[data-select-pesquisavel]').forEach(function (select) {
+            const campo = document.createElement('input');
+            campo.type = 'search';
+            campo.className = 'input select-pesquisa';
+            campo.placeholder = 'Pesquisar na lista…';
+            campo.setAttribute('aria-label', 'Pesquisar opções de ' + ((select.labels[0] && select.labels[0].textContent.trim()) || 'lista'));
+            campo.setAttribute('aria-controls', select.id);
+            select.parentNode.insertBefore(campo, select);
+            const semAcento = function (t) { return t.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase(); };
+            campo.addEventListener('input', function () {
+                const termo = semAcento(campo.value.trim());
+                Array.from(select.options).forEach(function (opcao) {
+                    opcao.hidden = termo !== '' && opcao.value !== '' && !opcao.selected && !semAcento(opcao.textContent).includes(termo);
+                });
+            });
+        });
+
         // Seletor que filtra as opções de outro (ex.: Órgão -> Unidade): as
         // opções do alvo trazem data-instituicao; vazio mostra todas.
         document.querySelectorAll('select[data-filtro-instituicao]').forEach(function (filtro) {

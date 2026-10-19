@@ -69,8 +69,8 @@ if ($agente !== null && !in_array((int)$agente['id'], array_map('intval', array_
 }
 
 $titulo      = 'Criar Usuário';
-$menuAtivo   = 'usuarios';
-$breadcrumbs = ['Usuários' => 'usuarios.php', 'Criar' => null];
+$menuAtivo   = 'config';
+$breadcrumbs = ['Configurações' => 'configuracoes.php', 'Usuários' => 'configuracoes.php?aba=usuarios', 'Criar' => null];
 $scripts     = ['form-usuario.js'];
 $modo        = 'novo';
 $registro    = null;

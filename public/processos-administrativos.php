@@ -5,6 +5,7 @@ require_once __DIR__ . '/../app/bootstrap.php';
 
 use App\Core\Csrf;
 use App\Core\Prazo;
+use App\Repositories\ProcedimentoRepository;
 use App\Repositories\ProcessoAdministrativoRepository;
 use App\Repositories\VinculoRepository;
 
@@ -14,7 +15,7 @@ $repoVin = new VinculoRepository();
 [$designadoUrl, $designado] = filtro_designado();
 $filtros = [
     'busca'        => entrada('busca', $_GET),
-    'procedimento' => entrada('procedimento', $_GET),
+    'procedimento_id' => entrada('procedimento_id', $_GET),
     'de'           => entrada('de', $_GET),
     'ate'          => entrada('ate', $_GET),
     'atividade'    => entrada('atividade', $_GET),
@@ -23,14 +24,16 @@ $filtros = [
     'ordenar'      => entrada('ordenar', $_GET) ?: 'created_at',
     'direcao'      => entrada('direcao', $_GET) ?: 'DESC',
 ];
-$procedimentosDisponiveis = $repo->procedimentosDistintos();
+// Catálogo completo (inclusive inativos): o filtro serve também ao histórico.
+$procedimentosDisponiveis = (new ProcedimentoRepository())->todos();
+$procedimentoFiltro = ctype_digit($filtros['procedimento_id']) ? (int)$filtros['procedimento_id'] : ($filtros['procedimento_id'] === 'nenhum' ? 'nenhum' : null);
 $pagina = entrada_int('pagina') ?? 1;
 $porPagina = (int)config('app.itens_por_pagina', 20);
 
 $erroBanco = null;
 $paginacao = null;
 try {
-    $paginacao = $repo->listar(['designado' => $designado] + $filtros, $pagina, $porPagina);
+    $paginacao = $repo->listar(['designado' => $designado, 'procedimento_id' => $procedimentoFiltro] + $filtros, $pagina, $porPagina);
 } catch (Throwable $e) {
     $erroBanco = $e->getMessage();
 }
@@ -72,11 +75,12 @@ require APP_ROOT . '/Views/layout/cabecalho.php';
                        placeholder="SEPLAG-PRO-2026/16696 ou termo do objeto">
             </div>
             <div class="campo">
-                <label class="campo__rotulo" for="procedimento">Procedimento</label>
-                <select class="select" id="procedimento" name="procedimento">
+                <label class="campo__rotulo" for="procedimento_id">Procedimento</label>
+                <select class="select" id="procedimento_id" name="procedimento_id">
                     <option value="">— Todos —</option>
+                    <option value="nenhum" <?= $filtros['procedimento_id'] === 'nenhum' ? 'selected' : '' ?>>Sem procedimento do catálogo</option>
                     <?php foreach ($procedimentosDisponiveis as $p): ?>
-                        <option value="<?= e($p) ?>" <?= $filtros['procedimento'] === $p ? 'selected' : '' ?>><?= e($p) ?></option>
+                        <option value="<?= (int)$p['id'] ?>" <?= $filtros['procedimento_id'] === (string)$p['id'] ? 'selected' : '' ?>><?= e($p['nome']) ?><?= (int)$p['ativo'] === 1 ? '' : ' (inativo)' ?></option>
                     <?php endforeach; ?>
                 </select>
             </div>
@@ -155,7 +159,7 @@ require APP_ROOT . '/Views/layout/cabecalho.php';
                             <span class="badge badge--neutro">○ Inativo</span>
                         <?php endif; ?>
                     </td>
-                    <td><?= ou_traco($p['procedimento'] ?? null) ?></td>
+                    <td><?= $p['procedimento_nome'] !== null ? e($p['procedimento_nome']) : ($p['procedimento'] !== null && $p['procedimento'] !== '' ? '<span class="texto-secundario" title="Classificação anterior (texto livre), ainda não vinculada ao catálogo">' . e($p['procedimento']) . '</span>' : '<span class="texto-secundario">—</span>') ?></td>
                     <td><span class="tabela__truncado" title="<?= e($p['objeto']) ?>"><?= ou_traco($p['objeto']) ?></span></td>
                     <td>
                         <?php if ($vinculados === []): ?>

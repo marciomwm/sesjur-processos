@@ -53,8 +53,21 @@ de origem, a versão do extrator e a data da extração.
 _Avoid_: fonte
 
 **Procedimento**:
-Classificação textual livre do tipo de trâmite de um Processo Administrativo
-(ex.: "Fornecimento de Produto de Saúde", "Ressarcimento Interfederativo").
+Tipo de trâmite de um Processo Administrativo (ex.: "Análise Prévia de
+Legalidade", "Consulta Jurídica"), escolhido num catálogo mantido só por
+Administradores (Configurações › Procedimentos). O Usuário só escolhe itens
+ativos; não cria procedimentos no formulário. Obrigatório nos novos cadastros
+enquanto houver item ativo, e não pode ser removido de um processo que já o
+tem. Tabela de apoio: inativado, nunca excluído — continua valendo, e
+aparecendo na edição sem ser substituído, nos processos que já o possuem.
+Nome único sem distinção de caixa, acentos e espaços repetidos.
+_Avoid_: objeto, produto, espécie da demanda (o Procedimento é o trâmite, não
+o que se pede)
+
+**Classificação anterior** (Procedimento):
+Texto livre gravado no campo Procedimento antes do catálogo. Preservado e
+exibido como histórico, nunca editado; só vira Procedimento por conciliação
+com correspondência exata (`database/conciliar-procedimentos.php`).
 
 ## Situação e histórico
 
@@ -373,6 +386,12 @@ Administradores e Gestores.
 Nível de acesso do Usuário: Administrador (tudo, inclusive usuários, perfis e
 configurações), Gestor (processos e Designação) ou Usuário (acompanha
 processos; não designa).
+
+**Configurações do Sistema**:
+Área exclusiva de Administradores que reúne, em guias, Usuários, Extensão
+(parâmetros da integração com a extensão do navegador), Procedimentos e
+Prioridades. Alterações dos parâmetros da extensão ficam na Auditoria.
+Agentes Públicos continuam em página própria.
 _Avoid_: role, papel, permissão, cargo (Cargo é a função funcional, não o
 nível de acesso)
 

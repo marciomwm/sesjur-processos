@@ -19,7 +19,7 @@ use App\Validators\SenhaValidator;
 $id = entrada_int('id');
 if ($id === null) {
     flash('erro', 'Usuário não informado.');
-    redirecionar('usuarios.php');
+    redirecionar('configuracoes.php?aba=usuarios');
 }
 
 // Administrador ve qualquer ficha; os demais, apenas a propria.
@@ -32,7 +32,7 @@ if (!$ehAdmin && !$proprio) {
 $registro = (new UsuarioRepository())->buscarPorId($id);
 if ($registro === null) {
     flash('erro', 'Usuário não encontrado.');
-    redirecionar('usuarios.php');
+    redirecionar('configuracoes.php?aba=usuarios');
 }
 
 $historico = (new AuditoriaRepository())->listarPorEntidade('usuarios', $id, 50, [
@@ -72,8 +72,8 @@ if ($proprio && !$ehAdmin) {
     $breadcrumbs = ['Minha conta' => null, 'Meu cadastro' => null];
 } else {
     $titulo      = 'Usuário';
-    $menuAtivo   = $proprio ? 'meu-cadastro' : 'usuarios';
-    $breadcrumbs = ['Usuários' => 'usuarios.php', $registro['nome'] => null];
+    $menuAtivo   = $proprio ? 'meu-cadastro' : 'config';
+    $breadcrumbs = ['Usuários' => 'configuracoes.php?aba=usuarios', $registro['nome'] => null];
 }
 
 require APP_ROOT . '/Views/layout/cabecalho.php';
@@ -94,7 +94,7 @@ require APP_ROOT . '/Views/layout/cabecalho.php';
     </div>
     <div class="acoes-linha">
         <?php if ($ehAdmin): ?>
-            <a class="btn btn--ghost btn--sm" href="<?= e(url('usuarios.php')) ?>">‹ Voltar</a>
+            <a class="btn btn--ghost btn--sm" href="<?= e(url('configuracoes.php?aba=usuarios')) ?>">‹ Voltar</a>
         <?php endif; ?>
         <a class="btn btn--secundario btn--sm" href="<?= e(url('editar-usuario.php?id=' . $id)) ?>">✎ Editar</a>
         <?php if ($ehAdmin && !$proprio): ?>

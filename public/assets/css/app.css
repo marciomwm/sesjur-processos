@@ -1776,3 +1776,17 @@ a.indicador:focus-visible { outline: 2px solid var(--azul-700); outline-offset: 
     .indicadores--intimacoes { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .cabecalho-pagina .btn--destaque { width: 100%; justify-content: center; }
 }
+
+/* ---------- Configurações do Sistema ---------- */
+.config-cabecalho { margin: 0 0 var(--densidade-grade); }
+.config-cabecalho__titulo { margin: 0; font-size: 20px; color: var(--azul-800); }
+.config-cabecalho__descricao { margin: 4px 0 0; color: var(--cinza-700); }
+.config-abas { width: fit-content; max-width: 100%; }
+.config-grade { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: var(--densidade-secao); }
+.lista-passos { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; }
+/* Pesquisa sobre um select longo (data-select-pesquisavel). */
+.select-pesquisa { margin-bottom: 6px; }
+@media (max-width: 720px) {
+    .config-abas { width: 100%; }
+    .config-grade { grid-template-columns: 1fr; }
+}

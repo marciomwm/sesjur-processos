@@ -24,7 +24,8 @@ final class ProcessoAdministrativoService
         private readonly VinculoRepository $vinculos = new VinculoRepository(),
         private readonly EventoAdministrativoRepository $eventos = new EventoAdministrativoRepository(),
         private readonly AcaoRepository $acoes = new AcaoRepository(),
-        private ?ProcessoExtrajudicialService $extrajudiciais = null
+        private ?ProcessoExtrajudicialService $extrajudiciais = null,
+        private ?ProcedimentoService $procedimentos = null
     ) {
     }
 
@@ -90,7 +91,7 @@ final class ProcessoAdministrativoService
     }
 
     /**
-     * @param array $entrada protocolo, data_abertura, objeto, procedimento, origem, data_extracao, url_origem,
+     * @param array $entrada protocolo, data_abertura, objeto, procedimento_id, origem, data_extracao, url_origem,
      *                       situacao, situacao_descricao, responsavel_*, judiciais_ids[],
      *                       extrajudiciais_ids[] (opcional),
      *                       eventos (lista; null = manter as movimentacoes atuais)
@@ -143,7 +144,7 @@ final class ProcessoAdministrativoService
             throw new ValidationException([], 'Processo administrativo não encontrado.');
         }
 
-        $dados = $this->validar($entrada, $id);
+        $dados = $this->validar($entrada, $id, $existente);
         $eventos = self::eventosDaEntrada($entrada);
 
         Database::transacao(function () use ($id, $dados, $entrada, $eventos): void {
@@ -170,11 +171,15 @@ final class ProcessoAdministrativoService
 
     /**
      * Valida e normaliza a entrada.
+     * @param ?array $existente registro atual (edicao); buscado quando omitido
      * @throws ValidationException
      */
-    public function validar(array $entrada, ?int $ignorarId): array
+    public function validar(array $entrada, ?int $ignorarId, ?array $existente = null): array
     {
         $erros = [];
+        if ($ignorarId !== null) {
+            $existente ??= $this->repo->buscarPorId($ignorarId);
+        }
 
         $protocolo = ProtocoloValidator::normalizar($entrada['protocolo'] ?? null);
         if ($protocolo === null) {
@@ -204,7 +209,28 @@ final class ProcessoAdministrativoService
             $erros['objeto'] = 'O objeto excede o tamanho máximo permitido.';
         }
 
-        $procedimento = Normalizador::textoLimitado($entrada['procedimento'] ?? null, 160);
+        // Procedimento: so por escolha no catalogo (procedimento_id). O texto
+        // livre antigo (coluna `procedimento`) e preservado como historico e
+        // nunca e gravado a partir da entrada.
+        $this->procedimentos ??= new ProcedimentoService();
+        $procedimentoAtual = isset($existente['procedimento_id']) ? (int)$existente['procedimento_id'] : null;
+        if ($existente !== null && !array_key_exists('procedimento_id', $entrada)) {
+            // Chamada sem o campo (ex.: atualizacao parcial): mantem o atual.
+            $procedimentoId = $procedimentoAtual;
+        } else {
+            // Obrigatorio no cadastro novo (com catalogo ativo) e quando o
+            // processo ja tinha classificacao: nao se remove o procedimento.
+            $obrigatorio = $existente === null ? $this->procedimentos->obrigatorioEmNovos() : $procedimentoAtual !== null;
+            [$procedimentoId, $erroProcedimento] = $this->procedimentos->escolhaParaProcesso(
+                $entrada['procedimento_id'] ?? null,
+                $procedimentoAtual,
+                $obrigatorio
+            );
+            if ($erroProcedimento !== null) {
+                $erros['procedimento_id'] = $erroProcedimento;
+            }
+        }
+        $procedimentoLegado = $existente['procedimento'] ?? null;
 
         $origemInformada = (string)($entrada['origem'] ?? 'MANUAL');
         $origem = in_array($origemInformada, ['MANUAL', 'SIGADOC'], true) ? $origemInformada : 'MANUAL';
@@ -251,7 +277,8 @@ final class ProcessoAdministrativoService
             'protocolo'       => $protocolo,
             'data_abertura'   => $dataAbertura,
             'objeto'          => $objeto,
-            'procedimento'    => $procedimento,
+            'procedimento'    => $procedimentoLegado,
+            'procedimento_id' => $procedimentoId,
             'prazo'           => $prazo,
             'prazo_hora'      => $prazoHora ?: null,
             'origem'          => $origem,

@@ -17,7 +17,7 @@ $repo = new PrioridadeRepository();
 $registro = $id !== null ? $repo->buscarPorId($id) : null;
 if ($registro === null) {
     flash('erro', 'Prioridade não encontrada.');
-    redirecionar('prioridades.php');
+    redirecionar('configuracoes.php?aba=prioridades');
 }
 
 $erros = [];
@@ -29,7 +29,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         (new PrioridadeService())->atualizar($id, $dados);
         flash('sucesso', 'Prioridade atualizada com sucesso.');
-        redirecionar('prioridades.php');
+        redirecionar('configuracoes.php?aba=prioridades');
     } catch (ValidationException $e) {
         $erros = $e->erros() ?: ['_geral' => $e->getMessage()];
     } catch (Throwable $e) {
@@ -50,8 +50,8 @@ $historicoVazio = 'Nenhum evento registrado. Prioridades criadas pela instalaç�
 $ativa = (int)$registro['ativo'] === 1;
 
 $titulo      = 'Editar prioridade';
-$menuAtivo   = 'prioridades';
-$breadcrumbs = ['Sistema' => null, 'Prioridades' => 'prioridades.php', $registro['nome'] => null];
+$menuAtivo   = 'config';
+$breadcrumbs = ['Sistema' => null, 'Configurações' => 'configuracoes.php', 'Prioridades' => 'configuracoes.php?aba=prioridades', $registro['nome'] => null];
 
 require APP_ROOT . '/Views/layout/cabecalho.php';
 ?>
@@ -100,7 +100,7 @@ require APP_ROOT . '/Views/layout/cabecalho.php';
             </div>
         </div>
         <div class="card__rodape form-usuario__acoes">
-            <a class="btn btn--ghost" href="<?= e(url('prioridades.php')) ?>">Cancelar</a>
+            <a class="btn btn--ghost" href="<?= e(url('configuracoes.php?aba=prioridades')) ?>">Cancelar</a>
             <button type="submit" class="btn btn--primario">Salvar alterações</button>
         </div>
     </section>

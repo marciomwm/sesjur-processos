@@ -26,6 +26,7 @@ DROP TABLE IF EXISTS `processo_administrativo_produtos_saude`;
 DROP TABLE IF EXISTS `sigtap_procedimentos`;
 DROP TABLE IF EXISTS `processo_administrativo_prioridades`;
 DROP TABLE IF EXISTS `prioridades`;
+DROP TABLE IF EXISTS `procedimentos`;
 DROP TABLE IF EXISTS `agentes_publicos`;
 DROP TABLE IF EXISTS `processo_administrativo_anotacoes`;
 DROP TABLE IF EXISTS `processo_administrativo_solicitacoes`;
@@ -59,8 +60,9 @@ CREATE TABLE `processos_administrativos` (
     `protocolo`      VARCHAR(60)     NOT NULL COMMENT 'Ex.: SEPLAG-PRO-2026/16696',
     `data_abertura`  DATE            NULL,
     `objeto`         TEXT            NULL,
-    `procedimento`   VARCHAR(160)    NULL COMMENT 'Ex.: Fornecimento de Produto de Saude, Ressarcimento Interfederativo',
-    `origem`         ENUM('MANUAL','SIGADOC') NOT NULL DEFAULT 'MANUAL',
+    `procedimento`   VARCHAR(160)    NULL COMMENT 'Legado: texto livre anterior ao catalogo (procedimento_id). Preservado, nao editado',
+    `procedimento_id` SMALLINT UNSIGNED NULL COMMENT 'Procedimento do catalogo (FK definida apos a tabela procedimentos)',
+    `origem`        ENUM('MANUAL','SIGADOC') NOT NULL DEFAULT 'MANUAL',
     `url_origem`     VARCHAR(500)    NULL,
     `extrator_versao` VARCHAR(20)    NULL,
     `data_extracao`  DATETIME        NULL,
@@ -84,6 +86,7 @@ CREATE TABLE `processos_administrativos` (
     KEY `ix_pa_ativo` (`ativo`),
     KEY `ix_pa_situacao` (`situacao`),
     KEY `ix_pa_procedimento` (`procedimento`),
+    KEY `ix_pa_procedimento_id` (`procedimento_id`),
     KEY `ix_pa_created_at` (`created_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -716,6 +719,38 @@ CREATE TABLE `processo_administrativo_prioridades` (
     CONSTRAINT `fk_papr_criado_por`
         FOREIGN KEY (`criado_por`) REFERENCES `usuarios` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ---------------------------------------------------------------------
+-- Procedimentos: catalogo padronizado do tipo de tramite do processo
+-- administrativo, mantido pelos administradores (Configuracoes). O
+-- processo referencia o item por FK; o usuario so escolhe itens ativos.
+-- Sem exclusao: item em desuso e inativado e continua valendo nos
+-- processos que ja o possuem. O nome e unico sem distincao de caixa e
+-- acentos (collation utf8mb4_unicode_ci), com espacos normalizados.
+-- ---------------------------------------------------------------------
+CREATE TABLE `procedimentos` (
+    `id`             SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `nome`           VARCHAR(160)      NOT NULL,
+    `descricao`      VARCHAR(500)      NULL,
+    `ativo`          TINYINT(1)        NOT NULL DEFAULT 1,
+    `criado_por`     INT UNSIGNED      NULL,
+    `atualizado_por` INT UNSIGNED      NULL,
+    `created_at`     DATETIME          NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `updated_at`     DATETIME          NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uq_procedimentos_nome` (`nome`),
+    KEY `ix_procedimentos_ativo` (`ativo`, `nome`),
+    CONSTRAINT `ck_procedimentos_ativo` CHECK (`ativo` IN (0, 1)),
+    CONSTRAINT `fk_procedimentos_criado_por`
+        FOREIGN KEY (`criado_por`) REFERENCES `usuarios` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT `fk_procedimentos_atualizado_por`
+        FOREIGN KEY (`atualizado_por`) REFERENCES `usuarios` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+ALTER TABLE `processos_administrativos`
+    ADD CONSTRAINT `fk_pa_procedimento`
+        FOREIGN KEY (`procedimento_id`) REFERENCES `procedimentos` (`id`)
+        ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- ---------------------------------------------------------------------
 -- Classificacao SIGTAP (Tabela de Procedimentos, Medicamentos e OPM do
