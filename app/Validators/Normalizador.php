@@ -233,7 +233,8 @@ final class Normalizador
     /** Limite de movimentacoes aceitas por processo (espelha a extensao). */
     public const LIMITE_EVENTOS = 1000;
 
-    private static function semAcento(string $valor): string
+    /** Minusculas sem acentos, para comparar rotulos ("Indenizatório" = "indenizatorio"). */
+    public static function semAcento(string $valor): string
     {
         return strtr(mb_strtolower($valor), [
             'á'=>'a','à'=>'a','ã'=>'a','â'=>'a','é'=>'e','ê'=>'e','í'=>'i',

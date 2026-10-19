@@ -5,14 +5,17 @@ require_once __DIR__ . '/../app/bootstrap.php';
 
 use App\Core\Auth;
 use App\Core\Csrf;
+use App\Core\Dinheiro;
 use App\Core\Prazo;
 use App\Repositories\AcaoRepository;
 use App\Repositories\AnotacaoRepository;
 use App\Repositories\AuditoriaRepository;
 use App\Repositories\DesignacaoRepository;
+use App\Repositories\EntregadorRepository;
 use App\Repositories\EventoAdministrativoRepository;
 use App\Repositories\IntimacaoPessoalRepository;
 use App\Repositories\LotacaoRepository;
+use App\Repositories\PagamentoIndenizatorioRepository;
 use App\Repositories\PrioridadeRepository;
 use App\Repositories\ProcessoAdministrativoRepository;
 use App\Repositories\ProdutoSaudeRepository;
@@ -22,6 +25,7 @@ use App\Repositories\VinculoRepository;
 use App\Services\AcaoService;
 use App\Services\ConfiguracaoService;
 use App\Services\IntimacaoPessoalService;
+use App\Services\PagamentoIndenizatorioService;
 use App\Services\PrioridadeService;
 use App\Services\ProcessoExtrajudicialService;
 use App\Services\ProdutoSaudeService;
@@ -61,19 +65,53 @@ $prioridadesDisponiveis = array_values(array_filter(
 $historico = (new AuditoriaRepository())->listarPorEntidade('processos_administrativos', $id, 200);
 $lotacoes = (new LotacaoRepository())->opcoes();
 
+// Dados do Pagamento: guia do procedimento Pagamento Indenizatório. Dados já
+// gravados continuam visíveis (sem edição) se o procedimento mudar depois.
+$pagamento = (new PagamentoIndenizatorioRepository())->doProcesso($id);
+$pagamentoEditavel = PagamentoIndenizatorioService::exigidoNoProcesso($registro);
+$exibirPagamento = $pagamentoEditavel || $pagamento !== null;
+$errosPagamento = [];
+if ($exibirPagamento) {
+    $demandantes = (new LotacaoRepository())->opcoesDaInstituicao(
+        PagamentoIndenizatorioService::INSTITUICAO_DEMANDANTE,
+        $pagamento !== null ? (int)$pagamento['demandante_lotacao_id'] : null
+    );
+    $credores = (new EntregadorRepository())->opcoes();
+    $dadosPagamento = $pagamento !== null ? [
+        'demandante_lotacao_id' => (string)$pagamento['demandante_lotacao_id'],
+        'entregador_id'         => (string)$pagamento['entregador_id'],
+        'objeto'                => $pagamento['objeto'],
+        'data_execucao'         => $pagamento['data_execucao'],
+        'valor'                 => Dinheiro::paraCampo($pagamento['valor']),
+    ] : [];
+    // Envio com erro (salvar-dados-pagamento.php): reexibe o que foi digitado.
+    $formPagamento = $_SESSION['dados_pagamento_form'] ?? null;
+    unset($_SESSION['dados_pagamento_form']);
+    if (is_array($formPagamento) && (int)($formPagamento['processo_id'] ?? 0) === $id) {
+        $dadosPagamento = (array)$formPagamento['dados'];
+        $errosPagamento = (array)$formPagamento['erros'];
+    }
+    // Entregador recém-cadastrado a partir desta guia já vem escolhido como Credor.
+    $credorNovo = entrada_int('credor');
+    if ($credorNovo !== null && in_array($credorNovo, array_map('intval', array_column($credores, 'id')), true)) {
+        $dadosPagamento['entregador_id'] = (string)$credorNovo;
+    }
+}
+
 // Historico do processo: traducao dos campos gravados na auditoria.
 $nomesLotacao = array_column((new LotacaoRepository())->todos(), 'nome', 'id');
 $rotulosCampo = [
     'descricao' => 'Descrição', 'prazo' => 'Prazo', 'prazo_hora' => 'Hora', 'status' => 'Status', 'observacao' => 'Observação',
     'data_solicitacao' => 'Data', 'expediente' => 'Expediente', 'destinatario_lotacao_id' => 'Destinatário',
     'assunto' => 'Assunto', 'texto' => 'Texto', 'categoria' => 'Categoria', 'sigtap' => 'SIGTAP',
-];
+] + PagamentoIndenizatorioService::ROTULOS_CAMPO;
 $valorAuditoria = static fn(string $campo, mixed $valor): string => match (true) {
     $valor === null || $valor === ''          => '—',
     $campo === 'status'                       => AcaoService::STATUS[$valor] ?? SolicitacaoService::STATUS[$valor] ?? (string)$valor,
     $campo === 'categoria'                    => ProdutoSaudeService::CATEGORIAS[$valor] ?? (string)$valor,
     $campo === 'destinatario_lotacao_id'      => (string)($nomesLotacao[$valor] ?? '#' . $valor),
-    in_array($campo, ['prazo', 'data_solicitacao'], true) => data_br((string)$valor),
+    $campo === 'valor'                        => Dinheiro::formatar(Dinheiro::deDecimal($valor)),
+    in_array($campo, ['prazo', 'data_solicitacao', 'data_execucao'], true) => data_br((string)$valor),
     default                                   => mb_strimwidth((string)$valor, 0, 140, '…'),
 };
 $historicoVazio = 'Nenhum registro no histórico. Providências, prioridades, produtos e vínculos extrajudiciais passam a aparecer aqui.';
@@ -110,7 +148,7 @@ $retornoIntimacao = 'processo-administrativo.php?id=' . $id;
 $titulo      = 'Processo Administrativo';
 $menuAtivo   = 'pa-lista';
 $breadcrumbs = ['Processos Administrativos' => 'processos-administrativos.php', $registro['protocolo'] => null];
-$scripts     = ['abas.js', 'modal.js', 'produtos-saude.js', 'intimacoes.js'];
+$scripts     = ['abas.js', 'modal.js', 'produtos-saude.js', 'intimacoes.js', 'dados-pagamento.js'];
 $retornoFicha = 'processo-administrativo.php?id=' . $id;
 
 require APP_ROOT . '/Views/layout/cabecalho.php';
@@ -171,6 +209,11 @@ require APP_ROOT . '/Views/layout/cabecalho.php';
 <div class="barra-ficha">
     <nav class="abas" data-abas aria-label="Seções do processo">
         <a class="abas__item" href="#informacoes" data-aba="informacoes">Informações</a>
+        <?php if ($exibirPagamento): ?>
+        <a class="abas__item" href="#dados-pagamento" data-aba="dados-pagamento" title="Pagamento Indenizatório">
+            Dados do Pagamento <span class="abas__contador" title="Dados ainda não registrados"><?= $pagamento === null ? '!' : '' ?></span>
+        </a>
+        <?php endif; ?>
         <a class="abas__item" href="#providencias" data-aba="providencias">
             Providências
             <span class="abas__contador" title="Tarefas em aberto e solicitações aguardando resposta"><?= count($acoesAbertas) + $solicitacoesAguardando ?: '' ?></span>
@@ -356,6 +399,12 @@ $tipoProcesso = 'administrativo';
 require APP_ROOT . '/Views/partials/designacao.php';
 ?>
 </div>
+
+<?php if ($exibirPagamento): ?>
+<div class="abas__painel" id="dados-pagamento" data-aba-painel>
+<?php require APP_ROOT . '/Views/partials/dados-pagamento.php'; ?>
+</div>
+<?php endif; ?>
 
 <div class="abas__painel" id="judiciais" data-aba-painel>
 <section class="card">

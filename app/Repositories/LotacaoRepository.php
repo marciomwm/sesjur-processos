@@ -51,6 +51,24 @@ final class LotacaoRepository extends TabelaApoioRepository
         return $stmt->fetchAll();
     }
 
+    /**
+     * Unidades de uma instituicao (pela sigla, ex.: SES-MT) para selecao:
+     * ativas e a ja gravada, em ordem alfabetica.
+     */
+    public function opcoesDaInstituicao(string $sigla, ?int $incluirId = null): array
+    {
+        $stmt = $this->db->prepare(
+            'SELECT t.id, t.nome, t.sigla, t.ativo
+               FROM lotacoes t JOIN instituicoes i ON i.id = t.instituicao_id
+              WHERE i.sigla = :sigla AND (t.ativo = 1 OR t.id = :incluir)
+              ORDER BY t.nome'
+        );
+        $stmt->bindValue(':sigla', $sigla);
+        $stmt->bindValue(':incluir', $incluirId ?? 0, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetchAll();
+    }
+
     /** Todas as unidades, inclusive inativas (filtros), com rotulo. */
     public function todos(): array
     {

@@ -142,6 +142,24 @@
                     .replace(/\.(\d{3})(\d{1,2})$/, '.$1-$2');
             });
         });
+        // CPF (11 dígitos) ou CNPJ (14 caracteres; o alfanumérico tem letras
+        // nos 12 primeiros): a máscara segue o que foi digitado.
+        document.querySelectorAll('[data-mascara="cpf-cnpj"]').forEach(function (input) {
+            input.addEventListener('input', function () {
+                const c = input.value.toUpperCase().replace(/[^0-9A-Z]/g, '').slice(0, 14);
+                if (c.length <= 11 && /^\d*$/.test(c)) {
+                    input.value = c.replace(/^(\d{3})(\d)/, '$1.$2').replace(/^(\d{3})\.(\d{3})(\d)/, '$1.$2.$3')
+                        .replace(/\.(\d{3})(\d{1,2})$/, '.$1-$2');
+                    return;
+                }
+                let saida = c.slice(0, 2);
+                if (c.length > 2)  saida += '.' + c.slice(2, 5);
+                if (c.length > 5)  saida += '.' + c.slice(5, 8);
+                if (c.length > 8)  saida += '/' + c.slice(8, 12);
+                if (c.length > 12) saida += '-' + c.slice(12);
+                input.value = saida;
+            });
+        });
         document.querySelectorAll('[data-mascara="telefone"]').forEach(function (input) {
             input.addEventListener('input', function () {
                 const d = input.value.replace(/\D/g, '').slice(0, 11);

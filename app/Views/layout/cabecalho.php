@@ -87,6 +87,10 @@ $ehAdmin     = Auth::ehAdministrador();
             <a class="sidebar__item <?= $menuAtivo === 'pe-novo' ? 'is-ativo' : '' ?>" href="<?= e(url('novo-processo-extrajudicial.php')) ?>">
                 <span class="sidebar__icone">＋</span> Novo Processo Extrajudicial
             </a>
+            <a class="sidebar__item <?= $menuAtivo === 'entregadores' ? 'is-ativo' : '' ?>" href="<?= e(url('entregadores.php')) ?>"
+               title="Pessoas físicas e jurídicas que entregam produtos e serviços à Administração">
+                <span class="sidebar__icone">🚚</span> Entregadores
+            </a>
 
             <?php if ($ehAdmin): ?>
                 <p class="sidebar__grupo">Sistema</p>

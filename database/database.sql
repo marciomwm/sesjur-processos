@@ -1134,6 +1134,64 @@ CREATE TABLE `expediente_modelo_usuarios` (
         FOREIGN KEY (`usuario_id`) REFERENCES `usuarios` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- ---------------------------------------------------------------------
+-- Entregadores: pessoas fisicas e juridicas que entregam o objeto
+-- (prestam servicos ou fornecem bens) a Administracao. Documento (CPF ou
+-- CNPJ, inclusive o alfanumerico) unico, gravado sem mascara.
+-- ---------------------------------------------------------------------
+CREATE TABLE `entregadores` (
+    `id`             INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `tipo_pessoa`    ENUM('FISICA','JURIDICA') NOT NULL COMMENT 'Derivado do documento: CPF = FISICA, CNPJ = JURIDICA',
+    `documento`      VARCHAR(14)  NOT NULL COMMENT 'CPF (11 digitos) ou CNPJ (14 caracteres, pode ser alfanumerico), sem mascara',
+    `nome`           VARCHAR(200) NOT NULL COMMENT 'Nome da pessoa fisica ou razao social',
+    `criado_por`     INT UNSIGNED NULL,
+    `atualizado_por` INT UNSIGNED NULL,
+    `created_at`     DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `updated_at`     DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uq_entregadores_documento` (`documento`),
+    KEY `ix_entregadores_nome` (`nome`),
+    CONSTRAINT `fk_entregadores_criado_por`
+        FOREIGN KEY (`criado_por`) REFERENCES `usuarios` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT `fk_entregadores_atualizado_por`
+        FOREIGN KEY (`atualizado_por`) REFERENCES `usuarios` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Dados do Pagamento: um registro por processo administrativo com o
+-- procedimento "Pagamento Indenizatorio". Demandante (unidade da SES-MT),
+-- Credor (entregador), Objeto, Data de Execucao, Competencia (AAAA-MM da
+-- data de execucao, conferida pelo CHECK) e Valor.
+CREATE TABLE `processo_administrativo_pagamentos` (
+    `processo_administrativo_id` INT UNSIGNED      NOT NULL,
+    `demandante_lotacao_id`      SMALLINT UNSIGNED NOT NULL COMMENT 'Unidade administrativa da SES-MT demandante',
+    `entregador_id`              INT UNSIGNED      NOT NULL COMMENT 'Credor',
+    `objeto`                     TEXT              NOT NULL COMMENT 'Bem fornecido ou servico prestado',
+    `data_execucao`              DATE              NOT NULL COMMENT 'Data da entrega do objeto',
+    `competencia`                CHAR(7)           NOT NULL COMMENT 'AAAA-MM, derivada da data de execucao',
+    `valor`                      DECIMAL(15,2)     NOT NULL,
+    `criado_por`                 INT UNSIGNED      NULL,
+    `atualizado_por`             INT UNSIGNED      NULL,
+    `created_at`                 DATETIME          NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `updated_at`                 DATETIME          NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (`processo_administrativo_id`),
+    KEY `ix_pap_competencia` (`competencia`),
+    KEY `ix_pap_demandante` (`demandante_lotacao_id`),
+    KEY `ix_pap_entregador` (`entregador_id`),
+    CONSTRAINT `ck_pap_valor` CHECK (`valor` > 0),
+    CONSTRAINT `ck_pap_competencia` CHECK (`competencia` = LEFT(`data_execucao`, 7)),
+    CONSTRAINT `fk_pap_processo`
+        FOREIGN KEY (`processo_administrativo_id`) REFERENCES `processos_administrativos` (`id`)
+        ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT `fk_pap_demandante`
+        FOREIGN KEY (`demandante_lotacao_id`) REFERENCES `lotacoes` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT `fk_pap_entregador`
+        FOREIGN KEY (`entregador_id`) REFERENCES `entregadores` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT `fk_pap_criado_por`
+        FOREIGN KEY (`criado_por`) REFERENCES `usuarios` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT `fk_pap_atualizado_por`
+        FOREIGN KEY (`atualizado_por`) REFERENCES `usuarios` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- Valores iniciais das tabelas de apoio. AJUSTAR as lotacoes para as
 -- unidades reais da SES-MT (nome oficial e sigla do SIGADOC).
 INSERT INTO `cargos` (`nome`) VALUES

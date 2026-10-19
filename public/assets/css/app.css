@@ -1629,6 +1629,8 @@ fieldset.campo > legend { padding: 0; margin-bottom: 5px; }
 .tabela--valores td.valor { font-weight: 650; }
 .input--sm, .select--sm { min-height: 34px; padding-top: 6px; padding-bottom: 6px; font-size: 12.5px; width: auto; }
 .input--valor { font-variant-numeric: tabular-nums; text-align: right; }
+/* Valor calculado exibido como campo (ex.: Competência dos Dados do Pagamento). */
+.input--leitura { display: flex; align-items: center; background: var(--cinza-100); color: var(--cinza-700); }
 
 .campo--opcoes { border: 0; margin: 0; padding: 0; min-width: 0; }
 .opcoes-tipo { display: inline-flex; gap: 2px; padding: 3px; border: 1px solid var(--cinza-200); border-radius: 13px; background: var(--cinza-100); }
