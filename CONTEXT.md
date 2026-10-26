@@ -209,6 +209,27 @@ Tutela ou Liminar, Prioridade) que admite um terceiro valor — "não informado
 pela fonte" — para nunca afirmar "não" quando o dado simplesmente não estava
 na página de origem.
 
+## API de Integração
+
+**Cliente da API**:
+Sistema externo autorizado a importar dados do SESJUR pela API de Integração
+(`api/v1/`), somente leitura. Tem Token próprio, Escopos, um Usuário
+responsável, IPs permitidos e validade opcionais. Independe do login web: o
+responsável não precisa estar ativo no sistema, e revogar o Cliente não afeta
+o Usuário.
+_Avoid_: usuário da API, integração (nome genérico da extração SIGADOC/PJe)
+
+**Token** (Cliente da API):
+Credencial secreta do Cliente (`sjr_<prefixo>.<segredo>`), exibida uma única
+vez na criação ou renovação; o SESJUR guarda só o hash. Renovar invalida o
+anterior na hora.
+_Avoid_: senha, chave (exceto no cabeçalho `X-API-Key`)
+
+**Escopo**:
+Recurso que um Cliente da API pode ler: Processos Administrativos, Judiciais,
+Extrajudiciais ou Vínculos. Providências, Usuários, Auditoria e módulos
+financeiros não são exportados.
+
 ## Bloqueios e depósitos judiciais
 
 **Lançamento de bloqueio**:

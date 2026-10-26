@@ -42,6 +42,20 @@ return [
         'bloqueio_minutos'    => 15,
     ],
 
+    'api' => [
+        /**
+         * API de Integracao (api/v1/): exportacao somente leitura para sistemas
+         * externos, autenticada por token. Os tokens sao criados por
+         * linha de comando: php database/api-clientes.php ajuda
+         */
+        // Recusa chamadas sem HTTPS (recomendado sempre que a API sair da maquina local).
+        'exigir_https'      => false,
+        // Chamadas por minuto permitidas a cada cliente.
+        'limite_por_minuto' => 120,
+        // Chamadas com token invalido por IP, em 10 minutos, antes do bloqueio temporario.
+        'max_falhas_por_ip' => 20,
+    ],
+
     'integracao' => [
         /**
          * Allowlist de hosts externos autorizados.
