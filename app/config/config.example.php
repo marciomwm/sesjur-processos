@@ -48,8 +48,17 @@ return [
          * externos, autenticada por token. Os tokens sao criados por
          * linha de comando: php database/api-clientes.php ajuda
          */
-        // Recusa chamadas sem HTTPS (recomendado sempre que a API sair da maquina local).
-        'exigir_https'      => false,
+        // Endereco publico da API, informado ao consumidor (servidor na VPN da SES-MT).
+        'url_publica'       => 'https://sesjur.saude.mt.gov.br/sesjur-processos/api/v1/',
+        // Recusa chamadas sem HTTPS. Padrao true; use false so no ambiente local (Laragon, http://localhost).
+        'exigir_https'      => true,
+        /**
+         * IPs dos proxies reversos que publicam o SESJUR. Somente deles sao
+         * aceitos X-Forwarded-Proto (HTTPS encerrado no proxy) e
+         * X-Forwarded-For (IP real do cliente, usado nos IPs permitidos e nos
+         * limites). Vazio = acesso direto ao Apache, sem proxy.
+         */
+        'proxies_confiaveis' => [],
         // Chamadas por minuto permitidas a cada cliente.
         'limite_por_minuto' => 120,
         // Chamadas com token invalido por IP, em 10 minutos, antes do bloqueio temporario.

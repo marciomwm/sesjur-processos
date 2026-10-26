@@ -16,6 +16,7 @@ define('GJ_SEM_SESSAO', true);
 
 require_once __DIR__ . '/../../app/bootstrap.php';
 
+use App\Core\RequisicaoApi;
 use App\Repositories\ApiClienteRepository;
 use App\Services\ApiClienteService;
 
@@ -40,7 +41,7 @@ register_shutdown_function(static function (): void {
             'recurso'     => basename((string)($_SERVER['SCRIPT_NAME'] ?? ''), '.php'),
             'parametros'  => ($_SERVER['QUERY_STRING'] ?? '') !== '' ? (string)$_SERVER['QUERY_STRING'] : null,
             'status_http' => (int)(http_response_code() ?: 200),
-            'ip'          => ip_cliente(),
+            'ip'          => api_ip_cliente(),
             'user_agent'  => isset($_SERVER['HTTP_USER_AGENT']) ? (string)$_SERVER['HTTP_USER_AGENT'] : null,
             'duracao_ms'  => (int)round((microtime(true) - $GLOBALS['api_inicio']) * 1000),
         ]);
@@ -53,6 +54,21 @@ set_exception_handler(static function (Throwable $e): void {
     $codigo = log_erro($e, 'api-v1');
     api_erro('INTERNAL_ERROR', 'Erro interno. Informe ao suporte o código ' . $codigo . '.', 500);
 });
+
+/** @return string[] IPs dos proxies reversos confiaveis (api.proxies_confiaveis). */
+function api_proxies(): array
+{
+    return array_values(array_filter(
+        array_map('trim', (array)config('api.proxies_confiaveis', [])),
+        static fn(string $ip): bool => filter_var($ip, FILTER_VALIDATE_IP) !== false
+    ));
+}
+
+/** IP do cliente, considerando o proxy reverso confiavel. */
+function api_ip_cliente(): ?string
+{
+    return RequisicaoApi::ip($_SERVER, api_proxies());
+}
 
 /** Resposta de erro padronizada. */
 function api_erro(string $codigo, string $mensagem, int $status, array $extra = []): never
@@ -89,13 +105,14 @@ function api_autenticar(?string $escopo): array
         api_erro('METHOD_NOT_ALLOWED', 'A API de Integração é somente leitura: use GET.', 405);
     }
 
-    if ((bool)config('api.exigir_https', false)
-        && (($_SERVER['HTTPS'] ?? '') === '' || ($_SERVER['HTTPS'] ?? '') === 'off')) {
-        api_erro('HTTPS_REQUIRED', 'Use HTTPS para acessar a API.', 403);
+    // Padrao seguro: sem a secao 'api' no config.php (como no servidor da VPN), exige HTTPS.
+    if ((bool)config('api.exigir_https', true) && !RequisicaoApi::https($_SERVER, api_proxies())) {
+        $url = (string)config('api.url_publica', '');
+        api_erro('HTTPS_REQUIRED', 'Use HTTPS para acessar a API' . ($url !== '' ? ": {$url}" : '') . '.', 403);
     }
 
     $repo = new ApiClienteRepository();
-    $ip = ip_cliente();
+    $ip = api_ip_cliente();
 
     $maxFalhas = max(1, (int)config('api.max_falhas_por_ip', 20));
     if ($ip !== null && $repo->contarFalhasDoIp($ip, 600) >= $maxFalhas) {

@@ -24,6 +24,7 @@ responder_json([
     'api'       => 'SESJUR — API de Integração',
     'versao'    => API_VERSAO,
     'gerado_em' => api_agora(),
+    'endereco'  => (string)config('api.url_publica', '') ?: null,
     'cliente'   => api_formatar([
         'nome'        => $cliente['nome'],
         'responsavel' => $cliente['responsavel_nome'],

@@ -2,7 +2,9 @@
 
 API **somente leitura** para que sistemas externos importem os dados do SESJUR. Cada sistema consumidor é um **Cliente da API**, com Token próprio, Escopos e um Usuário responsável (ver `CONTEXT.md`, seção "API de Integração").
 
-Primeiro cliente: **Sistema de Dieggo Ronney de Oliveira** (cliente #2, todos os escopos, validade até 26/10/2027, sem restrição de IP).
+A API é servida pelo **SESJUR em funcionamento na VPN da SES-MT** (`https://sesjur.saude.mt.gov.br/sesjur-processos/`), que recebe o código deste repositório por `git pull`. Os dados exportados são os do banco desse servidor.
+
+Primeiro cliente previsto: **Sistema de Dieggo Ronney de Oliveira** (todos os escopos, validade de um ano). O cliente e o token devem ser criados **no servidor da VPN** (ver [Implantação](#implantação-no-servidor-da-vpn)): um token criado em outra instalação, como o ambiente local de desenvolvimento, não vale lá.
 
 ## Regras
 
@@ -14,15 +16,18 @@ Primeiro cliente: **Sistema de Dieggo Ronney de Oliveira** (cliente #2, todos os
 - **RN-API-006** O parâmetro `ca=` do PJe (chave de acesso de quem fez a extração) é removido de `url_origem` antes de sair.
 - **RN-API-007** Limites: `api.limite_por_minuto` chamadas por cliente (padrão 120 → `429 RATE_LIMIT`); `api.max_falhas_por_ip` tokens inválidos por IP em 10 min (padrão 20 → `429 TOO_MANY_FAILURES`).
 - **RN-API-008** Toda chamada (inclusive as recusadas) fica em `api_requisicoes`; criação, renovação e revogação de clientes ficam na Auditoria.
-- **RN-API-009** Com `api.exigir_https = true`, chamadas sem HTTPS são recusadas. **Obrigatório** se a API for acessada fora da máquina/rede local.
+- **RN-API-009** Chamadas sem HTTPS são recusadas (`403 HTTPS_REQUIRED`). É o padrão: vale mesmo sem a seção `api` no `config.php`. Só o ambiente local de desenvolvimento usa `api.exigir_https = false`.
+- **RN-API-010** Atrás de proxy reverso, `X-Forwarded-Proto` e `X-Forwarded-For` só são aceitos de IPs listados em `api.proxies_confiaveis`; de qualquer outra origem são ignorados (poderiam ser forjados para burlar o HTTPS, os IPs permitidos ou os limites).
 
 ## Para o sistema consumidor
 
 ### Endereço
 
 ```
-http://<servidor>/sesjur-processos/api/v1/
+https://sesjur.saude.mt.gov.br/sesjur-processos/api/v1/
 ```
+
+O servidor do sistema consumidor precisa estar **conectado à VPN da SES-MT** e resolver o nome `sesjur.saude.mt.gov.br`. Se o certificado do SESJUR for emitido por autoridade certificadora interna, instale a cadeia dessa autoridade no servidor consumidor; **não desative a verificação do certificado**.
 
 ### Endpoints
 
@@ -68,12 +73,30 @@ http://<servidor>/sesjur-processos/api/v1/
 
 ```bash
 curl -H "Authorization: Bearer $SESJUR_TOKEN" \
-  "http://<servidor>/sesjur-processos/api/v1/processos-judiciais.php?limite=100&apos_id=0"
+  "https://sesjur.saude.mt.gov.br/sesjur-processos/api/v1/processos-judiciais.php?limite=100&apos_id=0"
 ```
 
 ### Dados pessoais e sigilo
 
 A exportação inclui dados pessoais (nomes e CPF/CNPJ de partes, responsáveis, objetos com nome de pacientes) e processos marcados com **segredo de justiça**. O sistema consumidor assume o mesmo dever de sigilo do SESJUR (LGPD): guardar o Token fora do código-fonte, restringir o acesso aos dados importados e não repassá-los.
+
+## Implantação no servidor da VPN
+
+Na pasta do projeto no servidor, depois do `git pull`:
+
+1. **Backup** do banco: `mysqldump -u <usuário> gestao_juridica > database/backup_antes_api_integracao_AAAAMMDD.sql`.
+2. **Migração** (idempotente, só cria `api_clientes` e `api_requisicoes`): `mysql -u <usuário> gestao_juridica < database/migracao_2026-10-26_api_integracao.sql`.
+3. **Configuração** em `app/config/config.php` (não versionado), seção `api`:
+   ```php
+   'api' => [
+       'url_publica'        => 'https://sesjur.saude.mt.gov.br/sesjur-processos/api/v1/',
+       'exigir_https'       => true,
+       'proxies_confiaveis' => [],   // IPs do proxy reverso, se o HTTPS terminar antes do Apache
+   ],
+   ```
+   Se o HTTPS for encerrado num proxy, sem `proxies_confiaveis` a API responde `403 HTTPS_REQUIRED` a toda chamada: informe o IP do proxy (é o `REMOTE_ADDR` que aparece em `api_requisicoes.ip`).
+4. **Cliente**: `php database/api-clientes.php criar --nome="Sistema de Dieggo Ronney de Oliveira" --responsavel=dieggooliveira@pge.mt.gov.br --expira=AAAA-MM-DD [--ips=<IP do servidor consumidor>]`. Entregue o token exibido por meio seguro.
+5. **Teste**: `curl -H "Authorization: Bearer <token>" https://sesjur.saude.mt.gov.br/sesjur-processos/api/v1/` deve responder `"success": true` com o `endereco` e os recursos liberados.
 
 ## Administração (linha de comando)
 
@@ -89,4 +112,4 @@ Estrutura: `database/migracao_2026-10-26_api_integracao.sql` (`api_clientes`, `a
 ## Pendências
 
 - 🗓️ Tela de administração dos Clientes da API em Configurações (hoje só por linha de comando).
-- 🗓️ Publicação em HTTPS e liberação de rede/firewall para o servidor do consumidor (hoje o Apache atende só o ambiente local).
+- 🗓️ Confirmar com a infraestrutura da SES-MT se o HTTPS de `sesjur.saude.mt.gov.br` termina no Apache ou num proxy reverso (define `api.proxies_confiaveis`) e liberar na VPN/firewall o acesso do servidor consumidor.

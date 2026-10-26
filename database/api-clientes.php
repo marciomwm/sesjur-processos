@@ -49,7 +49,10 @@ $repo = new ApiClienteRepository();
 $mostrarToken = static function (string $token): void {
     echo "\n  TOKEN (exibido somente agora — copie e entregue por meio seguro):\n\n";
     echo "  {$token}\n\n";
-    echo "  Uso: Authorization: Bearer <token>\n\n";
+    echo "  Uso: Authorization: Bearer <token>\n";
+    $url = (string)config('api.url_publica', '');
+    echo $url !== '' ? "  Endereço: {$url}\n\n" : "\n";
+    echo "  O token vale somente no banco em que foi criado: crie-o no servidor que o consumidor vai acessar.\n\n";
 };
 
 try {

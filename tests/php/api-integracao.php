@@ -9,6 +9,7 @@ declare(strict_types=1);
  */
 
 use App\Core\Database;
+use App\Core\RequisicaoApi;
 use App\Core\ValidationException;
 use App\Repositories\ApiClienteRepository;
 use App\Repositories\ExportacaoRepository;
@@ -41,6 +42,23 @@ $t->teste('confere IPs exatos e faixas IPv4 CIDR', function ($t) {
     $t->afirmar(!ApiClienteService::ipPermitido('10.1.3.1', '10.1.2.0/24'), 'fora da faixa');
     $t->afirmar(ApiClienteService::ipPermitido('::1', '::1'), 'IPv6 exato');
     $t->afirmar(!ApiClienteService::ipPermitido(null, '10.1.2.3'), 'IP desconhecido com lista');
+});
+
+$t->teste('reconhece HTTPS e IP real só através de proxy confiável', function ($t) {
+    $proxy = ['10.20.0.1'];
+    $t->afirmar(RequisicaoApi::https(['HTTPS' => 'on', 'REMOTE_ADDR' => '10.9.9.9'], []), 'HTTPS direto no Apache');
+    $t->afirmar(!RequisicaoApi::https(['HTTPS' => 'off', 'REMOTE_ADDR' => '10.9.9.9'], []), 'HTTP direto');
+
+    $viaProxy = ['REMOTE_ADDR' => '10.20.0.1', 'HTTP_X_FORWARDED_PROTO' => 'https', 'HTTP_X_FORWARDED_FOR' => '172.16.5.7'];
+    $t->afirmar(RequisicaoApi::https($viaProxy, $proxy), 'TLS encerrado no proxy confiável');
+    $t->igual(RequisicaoApi::ip($viaProxy, $proxy), '172.16.5.7', 'IP real informado pelo proxy');
+
+    $forjado = ['REMOTE_ADDR' => '10.9.9.9', 'HTTP_X_FORWARDED_PROTO' => 'https', 'HTTP_X_FORWARDED_FOR' => '127.0.0.1'];
+    $t->afirmar(!RequisicaoApi::https($forjado, $proxy), 'cabeçalho de quem não é proxy é ignorado');
+    $t->igual(RequisicaoApi::ip($forjado, $proxy), '10.9.9.9', 'IP forjado ignorado');
+
+    $cadeia = ['REMOTE_ADDR' => '10.20.0.1', 'HTTP_X_FORWARDED_FOR' => '1.2.3.4, 172.16.5.7'];
+    $t->igual(RequisicaoApi::ip($cadeia, $proxy), '172.16.5.7', 'último salto antes do proxy, não o primeiro (forjável)');
 });
 
 $t->grupo('API de Integração — clientes e autenticação');
