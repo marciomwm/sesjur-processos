@@ -57,8 +57,11 @@ return [
          * aceitos X-Forwarded-Proto (HTTPS encerrado no proxy) e
          * X-Forwarded-For (IP real do cliente, usado nos IPs permitidos e nos
          * limites). Vazio = acesso direto ao Apache, sem proxy.
+         * VPN da SES-MT: nginx em 10.15.1.11 (sesjur.saude.mt.gov.br) na frente
+         * da VM 10.15.0.115 (Apache/PHP). Confira o IP que o Apache ve em
+         * api_requisicoes.ip apos a primeira chamada e ajuste se for outro.
          */
-        'proxies_confiaveis' => [],
+        'proxies_confiaveis' => ['10.15.1.11'],
         // Chamadas por minuto permitidas a cada cliente.
         'limite_por_minuto' => 120,
         // Chamadas com token invalido por IP, em 10 minutos, antes do bloqueio temporario.

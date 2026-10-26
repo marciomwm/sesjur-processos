@@ -82,7 +82,35 @@ A exportação inclui dados pessoais (nomes e CPF/CNPJ de partes, responsáveis,
 
 ## Implantação no servidor da VPN
 
-Na pasta do projeto no servidor, depois do `git pull`:
+### Topologia (informada pela TI da SES-MT em 26/10/2026)
+
+```
+Sistema consumidor (na VPN)
+   │  HTTPS
+   ▼
+nginx — 10.15.1.11 — sesjur.saude.mt.gov.br   (encerra o TLS, proxy reverso)
+   │  HTTP
+   ▼
+VM 10.15.0.115 — Apache + PHP 8.3 + MySQL      (código por git pull)
+```
+
+Como o TLS termina no nginx, o Apache recebe HTTP e o PHP não vê o HTTPS: a API depende de `api.proxies_confiaveis` e de o nginx repassar os cabeçalhos abaixo. Pedido à TI (bloco `location` do SESJUR no nginx):
+
+```nginx
+proxy_set_header Host              $host;
+proxy_set_header X-Forwarded-Proto $scheme;
+proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+# O cabecalho Authorization ja e repassado por padrao; nao remova.
+
+# A pasta .git do projeto (historico com backups do banco) nunca pode ser servida.
+location ~ /\.git { deny all; return 404; }
+```
+
+> ⚠️ **Constatado em 26/10/2026:** `https://sesjur.saude.mt.gov.br/sesjur-processos/.git/` estava acessível, o que permite reconstruir o repositório — inclusive os `database/backup_*.sql` versionados, com dados reais. O `.htaccess` da raiz passou a bloquear `.git` (vale após o `git pull`); o bloqueio no nginx acima é a proteção principal e deve ser aplicado de imediato.
+
+### Passos
+
+Na pasta do projeto na VM, depois do `git pull`:
 
 1. **Backup** do banco: `mysqldump -u <usuário> gestao_juridica > database/backup_antes_api_integracao_AAAAMMDD.sql`.
 2. **Migração** (idempotente, só cria `api_clientes` e `api_requisicoes`): `mysql -u <usuário> gestao_juridica < database/migracao_2026-10-26_api_integracao.sql`.
@@ -91,10 +119,10 @@ Na pasta do projeto no servidor, depois do `git pull`:
    'api' => [
        'url_publica'        => 'https://sesjur.saude.mt.gov.br/sesjur-processos/api/v1/',
        'exigir_https'       => true,
-       'proxies_confiaveis' => [],   // IPs do proxy reverso, se o HTTPS terminar antes do Apache
+       'proxies_confiaveis' => ['10.15.1.11'],   // nginx que encerra o HTTPS
    ],
    ```
-   Se o HTTPS for encerrado num proxy, sem `proxies_confiaveis` a API responde `403 HTTPS_REQUIRED` a toda chamada: informe o IP do proxy (é o `REMOTE_ADDR` que aparece em `api_requisicoes.ip`).
+   Se a primeira chamada responder `403 HTTPS_REQUIRED`, veja o IP gravado: `SELECT ip, status_http FROM api_requisicoes ORDER BY id DESC LIMIT 5;`. Esse é o endereço com que o nginx chega ao Apache; se não for `10.15.1.11`, coloque-o em `proxies_confiaveis`. Se já for, falta o nginx enviar `X-Forwarded-Proto`.
 4. **Cliente**: `php database/api-clientes.php criar --nome="Sistema de Dieggo Ronney de Oliveira" --responsavel=dieggooliveira@pge.mt.gov.br --expira=AAAA-MM-DD [--ips=<IP do servidor consumidor>]`. Entregue o token exibido por meio seguro.
 5. **Teste**: `curl -H "Authorization: Bearer <token>" https://sesjur.saude.mt.gov.br/sesjur-processos/api/v1/` deve responder `"success": true` com o `endereco` e os recursos liberados.
 
@@ -112,4 +140,6 @@ Estrutura: `database/migracao_2026-10-26_api_integracao.sql` (`api_clientes`, `a
 ## Pendências
 
 - 🗓️ Tela de administração dos Clientes da API em Configurações (hoje só por linha de comando).
-- 🗓️ Confirmar com a infraestrutura da SES-MT se o HTTPS de `sesjur.saude.mt.gov.br` termina no Apache ou num proxy reverso (define `api.proxies_confiaveis`) e liberar na VPN/firewall o acesso do servidor consumidor.
+- 🗓️ TI da SES-MT: aplicar no nginx os cabeçalhos `X-Forwarded-*` e o bloqueio de `/.git`; confirmar o IP com que o nginx chega à VM; liberar na VPN o acesso do servidor consumidor e informar o IP dele (para `--ips`).
+- 🗓️ Avaliar retirar `database/backup_*.sql` do repositório e do histórico (contêm dados reais).
+- 🗓️ O cookie de sessão do sistema web não recebe `Secure` atrás do nginx (o PHP não vê o HTTPS); usar a mesma regra de proxy confiável no `bootstrap.php`.
