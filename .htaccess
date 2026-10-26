@@ -6,6 +6,14 @@ Options -Indexes
     RewriteBase /sesjur-processos/
     # Acesso a raiz do projeto -> public/
     RewriteRule ^$ public/ [L,R=302]
+    # Pasta .git (o servidor recebe o projeto por git pull): o historico
+    # contem backups do banco com dados reais. Nunca servir.
+    RewriteRule (^|/)\.git(/|$) - [F,L]
+</IfModule>
+<IfModule !mod_rewrite.c>
+    <IfModule mod_alias.c>
+        RedirectMatch 403 /\.git(/|$)
+    </IfModule>
 </IfModule>
 
 # Bloqueia o acesso a arquivos sensiveis em qualquer subpasta.

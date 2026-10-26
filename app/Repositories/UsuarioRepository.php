@@ -42,6 +42,14 @@ class UsuarioRepository
         return $stmt->fetch() ?: null;
     }
 
+    /** Usuario pelo e-mail de acesso (ja normalizado em minusculas). */
+    public function buscarPorEmail(string $email): ?array
+    {
+        $stmt = $this->db->prepare(self::SELECT_COMPLETO . ' WHERE u.email = :email');
+        $stmt->execute([':email' => $email]);
+        return $stmt->fetch() ?: null;
+    }
+
     /** Linha crua da tabela, com bloqueio para atualizacao (usar em transacao). */
     public function buscarParaAtualizar(int $id): ?array
     {

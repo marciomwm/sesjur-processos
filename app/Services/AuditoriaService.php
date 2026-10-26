@@ -46,8 +46,14 @@ final class AuditoriaService
     public const ADMINISTRATIVO_DESVINCULADO = 'ADMINISTRATIVO_DESVINCULADO';
     public const AGENTE_CRIADO  = 'AGENTE_CRIADO';
     public const AGENTE_EDITADO = 'AGENTE_EDITADO';
+    public const API_CLIENTE_CRIADO   = 'API_CLIENTE_CRIADO';
+    public const API_TOKEN_RENOVADO   = 'API_TOKEN_RENOVADO';
+    public const API_CLIENTE_REVOGADO = 'API_CLIENTE_REVOGADO';
 
     public const ROTULOS = [
+        self::API_CLIENTE_CRIADO   => 'Acesso à API criado',
+        self::API_TOKEN_RENOVADO   => 'Token da API renovado',
+        self::API_CLIENTE_REVOGADO => 'Acesso à API revogado',
         self::PRIORIDADE_ATRIBUIDA => 'Prioridade atribuída',
         self::PRIORIDADE_REMOVIDA  => 'Prioridade removida',
         self::PRODUTO_SAUDE_CRIADO   => 'Produto de saúde incluído',

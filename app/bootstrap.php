@@ -74,7 +74,8 @@ if (PHP_SAPI !== 'cli') {
     });
 }
 
-if (PHP_SAPI !== 'cli' && session_status() === PHP_SESSION_NONE) {
+// A API de Integracao (api/v1/) autentica por token e nao usa sessao.
+if (PHP_SAPI !== 'cli' && !defined('GJ_SEM_SESSAO') && session_status() === PHP_SESSION_NONE) {
     ini_set('session.use_strict_mode', '1');
     ini_set('session.use_only_cookies', '1');
     session_set_cookie_params([

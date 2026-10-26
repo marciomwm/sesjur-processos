@@ -76,7 +76,7 @@ echo $GLOBALS['gj_banco_teste_pronto']
 
 $t = new Runner();
 
-foreach (['validadores.php', 'interface.php', 'extracao.php', 'integracao.php', 'usuarios.php', 'acesso.php', 'acoes.php', 'solicitacoes.php', 'anotacoes.php', 'unidades.php', 'processo-relacionados.php', 'agentes.php', 'expediente.php', 'recursos.php', 'bloqueios.php', 'intimacoes.php', 'modelos-expediente.php', 'configuracoes.php', 'pagamentos.php'] as $arquivo) {
+foreach (['validadores.php', 'interface.php', 'extracao.php', 'integracao.php', 'usuarios.php', 'acesso.php', 'acoes.php', 'solicitacoes.php', 'anotacoes.php', 'unidades.php', 'processo-relacionados.php', 'agentes.php', 'expediente.php', 'recursos.php', 'bloqueios.php', 'intimacoes.php', 'modelos-expediente.php', 'configuracoes.php', 'pagamentos.php', 'api-integracao.php'] as $arquivo) {
     require __DIR__ . '/php/' . $arquivo;
 }
 

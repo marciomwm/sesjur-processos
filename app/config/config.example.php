@@ -42,6 +42,32 @@ return [
         'bloqueio_minutos'    => 15,
     ],
 
+    'api' => [
+        /**
+         * API de Integracao (api/v1/): exportacao somente leitura para sistemas
+         * externos, autenticada por token. Os tokens sao criados por
+         * linha de comando: php database/api-clientes.php ajuda
+         */
+        // Endereco publico da API, informado ao consumidor (servidor na VPN da SES-MT).
+        'url_publica'       => 'https://sesjur.saude.mt.gov.br/sesjur-processos/api/v1/',
+        // Recusa chamadas sem HTTPS. Padrao true; use false so no ambiente local (Laragon, http://localhost).
+        'exigir_https'      => true,
+        /**
+         * IPs dos proxies reversos que publicam o SESJUR. Somente deles sao
+         * aceitos X-Forwarded-Proto (HTTPS encerrado no proxy) e
+         * X-Forwarded-For (IP real do cliente, usado nos IPs permitidos e nos
+         * limites). Vazio = acesso direto ao Apache, sem proxy.
+         * VPN da SES-MT: nginx em 10.15.1.11 (sesjur.saude.mt.gov.br) na frente
+         * da VM 10.15.0.115 (Apache/PHP). Confira o IP que o Apache ve em
+         * api_requisicoes.ip apos a primeira chamada e ajuste se for outro.
+         */
+        'proxies_confiaveis' => ['10.15.1.11'],
+        // Chamadas por minuto permitidas a cada cliente.
+        'limite_por_minuto' => 120,
+        // Chamadas com token invalido por IP, em 10 minutos, antes do bloqueio temporario.
+        'max_falhas_por_ip' => 20,
+    ],
+
     'integracao' => [
         /**
          * Allowlist de hosts externos autorizados.

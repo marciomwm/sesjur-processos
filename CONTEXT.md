@@ -144,6 +144,9 @@ procedimento, exame, órtese, transporte sanitário… —, com Categoria, Descr
 e Classificação SIGTAP opcional. Um processo tem N produtos, sem repetir o item.
 _Avoid_: item, insumo (Insumo é uma das categorias)
 
+_Planejado (ainda não implementado — ver "Demanda de Saúde" ao fim)_: o Produto
+de Saúde passa a vir de um Catálogo, e a Categoria, de uma tabela de apoio.
+
 **Classificação SIGTAP**:
 Procedimento da Tabela SIGTAP do SUS (código de 10 dígitos, com grupo,
 subgrupo e forma de organização). Enquanto a tabela oficial não é importada,
@@ -208,6 +211,27 @@ Campo booleano de um Processo Judicial (Segredo de Justiça, Justiça Gratuita,
 Tutela ou Liminar, Prioridade) que admite um terceiro valor — "não informado
 pela fonte" — para nunca afirmar "não" quando o dado simplesmente não estava
 na página de origem.
+
+## API de Integração
+
+**Cliente da API**:
+Sistema externo autorizado a importar dados do SESJUR pela API de Integração
+(`api/v1/`), somente leitura. Tem Token próprio, Escopos, um Usuário
+responsável, IPs permitidos e validade opcionais. Independe do login web: o
+responsável não precisa estar ativo no sistema, e revogar o Cliente não afeta
+o Usuário.
+_Avoid_: usuário da API, integração (nome genérico da extração SIGADOC/PJe)
+
+**Token** (Cliente da API):
+Credencial secreta do Cliente (`sjr_<prefixo>.<segredo>`), exibida uma única
+vez na criação ou renovação; o SESJUR guarda só o hash. Renovar invalida o
+anterior na hora.
+_Avoid_: senha, chave (exceto no cabeçalho `X-API-Key`)
+
+**Escopo**:
+Recurso que um Cliente da API pode ler: Processos Administrativos, Judiciais,
+Extrajudiciais ou Vínculos. Providências, Usuários, Auditoria e módulos
+financeiros não são exportados.
 
 ## Bloqueios e depósitos judiciais
 
@@ -415,3 +439,44 @@ login.
 **Auditoria**:
 Registro append-only de quem fez o quê, quando e em qual entidade; nunca é
 editado nem apagado.
+
+## Demanda de Saúde (planejado, não implementado)
+
+Especificação consolidada em 2026-10-20 (Nexus › Entrada › "SESJUR -
+Especificação - Demanda de Saúde (consolidada)"). Os termos abaixo ainda não
+existem no código.
+
+**Módulo** (Procedimento):
+Painel e campos próprios de um Procedimento, selecionados por uma chave estável
+(`procedimentos.modulo`, ex.: `DEMANDA_SAUDE`) e não pelo nome. Ver ADR 0005.
+_Avoid_: tipo de processo, template
+
+**Demanda de Saúde**:
+Processo Administrativo cujo Procedimento tem o módulo `DEMANDA_SAUDE`: pedido
+de uma instituição externa (Judiciário, Ministério Público, Defensoria) para
+que a SES-MT forneça bens ou serviços de saúde a um Paciente. Não é entidade
+própria. Completa quando tem Paciente, Origem e ao menos um item. O status é
+derivado dos itens.
+_Avoid_: demanda jurídica (nome da nota original), procedimento (reservado ao trâmite)
+
+**Paciente**:
+Pessoa que receberá o produto de saúde: nome, CPF ou CNS, nascimento e
+município. Entidade reutilizável entre Demandas; uma Demanda tem um Paciente.
+CPF e CNS únicos quando informados; sem documento, alerta de possível
+duplicidade por nome e nascimento, com confirmação. Todos os Perfis veem e
+editam; alterações vão para a Auditoria.
+
+**Origem** (Demanda de Saúde):
+Instituição Externa e Órgão Externo que enviaram a Demanda (ex.: TJMT, 1ª Vara
+Cível de Cuiabá). Campo obrigatório, uma origem principal; independe dos
+vínculos judiciais e extrajudiciais.
+
+**Catálogo de Produtos de Saúde**:
+Cadastro de Produtos (nome único sem distinção de caixa e acento, Categoria,
+apresentação e SIGTAP opcionais, ativo). Produto novo digitado numa Demanda fica
+"pendente de revisão" até Gestor ou Administrador aprovar; no ranking aparece
+como "não revisado".
+
+**Item da Demanda**:
+Produto do Catálogo numa Demanda, com observação e Status: Em andamento,
+Atendido ou Encerrado. Mudanças de status vão para a Auditoria.
