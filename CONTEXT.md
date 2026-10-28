@@ -5,6 +5,12 @@ Administrativos (SIGADOC) e Processos Judiciais (PJe), com Vínculo N:N entre
 as duas frentes, Extração assistida do navegador do usuário e controle de
 acesso por Perfil.
 
+> **Reestruturação em curso** (Laravel, Procedimento como entidade, quatro
+> Dimensões — ADRs 0006 a 0010). Os trechos marcados _Alvo_ descrevem o sistema
+> reestruturado e **ainda não existem no código**; _Legado_ indica como o
+> sistema atual chama ou faz a mesma coisa. Onde não há marca, o termo vale
+> para os dois.
+
 ## Processos e vínculo
 
 **Processo Administrativo**:
@@ -53,16 +59,37 @@ de origem, a versão do extrator e a data da extração.
 _Avoid_: fonte
 
 **Procedimento**:
-Tipo de trâmite de um Processo Administrativo (ex.: "Análise Prévia de
-Legalidade", "Consulta Jurídica"), escolhido num catálogo mantido só por
-Administradores (Configurações › Procedimentos). O Usuário só escolhe itens
-ativos; não cria procedimentos no formulário. Obrigatório nos novos cadastros
-enquanto houver item ativo, e não pode ser removido de um processo que já o
-tem. Tabela de apoio: inativado, nunca excluído — continua valendo, e
-aparecendo na edição sem ser substituído, nos processos que já o possuem.
-Nome único sem distinção de caixa, acentos e espaços repetidos.
+_Alvo._ Trâmite concreto de um Tipo de Procedimento sobre um Processo
+Administrativo, com ID próprio. Pertence a **um** Processo (nunca existe sem
+ele) e um Processo tem **um ou mais**; registrar o Processo cria o primeiro na
+mesma transação. Tem Usuários designados, Providências (Tarefas, Solicitações,
+Anotações), Prioridades, Prazo, Estado e o Painel do seu Tipo.
+_Legado_: o código e o banco chamam `procedimento` o que aqui é o **Tipo de
+Procedimento**, um só por Processo.
 _Avoid_: objeto, produto, espécie da demanda (o Procedimento é o trâmite, não
 o que se pede)
+
+**Tipo de Procedimento**:
+Classificação do trâmite, escolhida num catálogo mantido só por Administradores
+(Configurações › Tipos de Procedimento). Previstos: Demanda Jurídica de Produto
+de Saúde, Comunicação Interinstitucional, Análise de Legalidade das
+Aquisições, Consultoria Jurídica, Pagamento Indenizatório, Ressarcimento
+Judicial, Gestão Administrativa e Outros. O Usuário só escolhe itens ativos;
+não cria tipos no formulário. Pode ser trocado por Administrador ou Gestor,
+com Auditoria. Tabela de apoio: inativado, nunca excluído — continua valendo,
+e aparecendo na edição sem ser substituído, nos Procedimentos que já o
+possuem. Nome único sem distinção de caixa, acentos e espaços repetidos.
+_Legado_: "Procedimento" (catálogo `procedimentos`, Configurações ›
+Procedimentos), obrigatório nos novos cadastros enquanto houver item ativo.
+_Avoid_: Procedimento (para o catálogo), espécie, categoria
+
+**Painel do Tipo**:
+Seções e campos próprios de um Tipo de Procedimento, com dados em tabela
+dedicada, selecionado por uma chave estável (`procedimentos.modulo`, ex.:
+`DEMANDA_SAUDE`) e nunca pelo nome. Todo Tipo tem Painel. Ao trocar o Tipo, os
+dados do painel anterior nunca são apagados. Sem construtor genérico de
+campos. Ver ADRs 0005 e 0010.
+_Avoid_: módulo (é nível de navegação), template, formulário dinâmico
 
 **Classificação anterior** (Procedimento):
 Texto livre gravado no campo Procedimento antes do catálogo. Preservado e
@@ -81,6 +108,8 @@ com Descrição, Prazo, Status e Observação. Status: Pendente, Em andamento,
 Concluída ou Cancelada — as duas últimas são **finalizadas**. Qualquer Usuário
 cria uma Tarefa; só Administrador, Gestor ou quem a criou a altera ou exclui.
 _Avoid_: ação (nome antigo; o código, as rotas e o banco ainda usam `acao`), atividade (reservado à Atividade do processo)
+_Alvo_: pertence ao **Procedimento**; é uma Pendência enquanto não finalizada
+e é sinalizada se seu Prazo exceder o do Procedimento.
 
 **Solicitação** (Processo Administrativo):
 Pedido enviado a outra unidade (uma Unidade Administrativa, o **destinatário**) por um
@@ -91,6 +120,9 @@ do Prazo. Ao contrário da Tarefa, a Solicitação não afeta o Prazo vigente ne
 Atividade do processo. Mesma regra de alteração da Tarefa: qualquer Usuário
 cria; só Administrador, Gestor ou quem a criou altera ou exclui.
 _Avoid_: ofício, pedido, requisição
+_Alvo_: pertence ao **Procedimento**; é uma Pendência enquanto Aguardando e
+**passa a influenciar o Estado do Procedimento** (hoje não afeta a Atividade);
+é sinalizada se seu Prazo exceder o do Procedimento.
 
 **Anotação** (Processo Administrativo):
 Nota livre e interna da equipe sobre um Processo Administrativo (um processo
@@ -98,6 +130,7 @@ tem N anotações), com autor e data. Mesma regra de alteração da Tarefa.
 _Avoid_: observação (campo da Tarefa), comentário; não confundir com o Evento
 do tipo "Anotação" importado do SIGADOC, que é histórico da fonte e não é
 editado no sistema
+_Alvo_: pertence ao **Procedimento**; não é Pendência.
 
 **Expediente**:
 Documento (ofício, comunicação interna, despacho…) redigido no Gerador de
@@ -125,6 +158,8 @@ _Avoid_: template, modelo público
 Guia da ficha do Processo Administrativo que reúne Tarefas, Solicitações e
 Anotações — tudo o que a equipe registra e acompanha no sistema, em oposição
 ao que é espelhado da fonte (Eventos, na guia Movimentações).
+_Alvo_: guia da ficha do **Procedimento**; a ficha do Processo mostra a visão
+consolidada.
 
 **Providência rápida**:
 Tarefa, Solicitação ou Anotação registrada pela barra "Registrar" da ficha, num
@@ -137,6 +172,7 @@ Determinação Judicial), com Nível de 1 (baixa) a 5 (máxima). Um processo tem
 nenhuma, uma ou várias, sem repetir. Tabela de apoio: inativada, nunca excluída.
 _Avoid_: urgência, prioridade como sinalizador tri-estado (esse é o do Processo
 Judicial, lido do PJe)
+_Alvo_: atribuída ao **Procedimento**, não ao Processo.
 
 **Produto de Saúde**:
 Objeto material da demanda do Processo Administrativo — medicamento,
@@ -160,17 +196,22 @@ do SIGADOC).
 **Prazo** (Processo Administrativo):
 Data com hora opcional (sem hora, vale até o fim do dia). Por padrão, a data
 de abertura + 30 dias.
+_Alvo_: **Prazo do Procedimento**, com o mesmo padrão (data de autuação do
+Processo + 30 dias), substituível à mão. Tarefas e Solicitações não o alteram;
+as de prazo posterior são **sinalizadas**.
 
 **Prazo vigente**:
 O prazo que vale para o Processo Administrativo: o mais próximo do vencimento
 entre o Prazo do próprio processo e os prazos das Tarefas ainda não
 finalizadas. Calculado pelo sistema a cada alteração do processo ou das tarefas.
+_Alvo_: **deixa de existir** (ADR 0010); vale o Prazo do Procedimento.
 
 **Atividade**:
 Indicador calculado do Processo Administrativo: **ativo** enquanto houver
 Tarefa não finalizada; **inativo** sem tarefas ou com todas finalizadas. Nunca é
 editado à mão.
 _Avoid_: status, situação (Situação é o estado no SIGADOC)
+_Alvo_: substituída pelo **Estado do Procedimento**.
 
 **Evento** (Processo Administrativo):
 Entrada do histórico de movimentação do Processo Administrativo (juntada,
@@ -328,6 +369,9 @@ Administrativa — o órgão/entidade é a Instituição da unidade. É a base d
 Usuários, mas nem todo agente tem acesso ao sistema. Nunca é excluído: o
 desligamento é a situação Desligado, que também inativa a conta.
 _Avoid_: servidor (é só um dos tipos de vínculo), pessoa
+_Alvo_: todo agente do **Poder Executivo Estadual**, não só da SES-MT e da
+PGE-MT. Instituições e Unidades Administrativas passam a abranger o mesmo
+escopo.
 
 **Usuário**:
 Credencial de acesso de um Agente Público: login (e-mail de acesso), Perfil e
@@ -424,6 +468,8 @@ Atribuição de um Processo Administrativo a um Usuário para acompanhamento
 (o Processo Judicial não tem Designação). Só um Usuário com Perfil
 Administrador ou Gestor cria ou remove uma Designação.
 _Avoid_: atribuição
+_Alvo_: designação de um ou mais **Usuários** (com ou sem Vinculação à SGS) a
+um **Procedimento**, não ao Processo; criam e removem Administrador e Gestor.
 
 **Responsável**:
 Agente público indicado pelo próprio SIGADOC como detentor do Processo
@@ -440,19 +486,124 @@ login.
 Registro append-only de quem fez o quê, quando e em qual entidade; nunca é
 editado nem apagado.
 
+## Reestruturação: navegação, acesso e estado do Procedimento (alvo)
+
+Termos de ADRs 0006 a 0010. Nenhum existe ainda no código.
+
+**Dimensão**:
+Maior divisão da aplicação: Principal, Administrativa, Jurídica e
+Configurações Gerais. Nenhuma é isolada; algumas funcionalidades se restringem
+a certos Perfis.
+_Avoid_: área (é a Área do Recurso), seção
+_Alvo_: cada Dimensão vive em pasta própria e pode ser ajustada de forma
+independente; novas Dimensões, Módulos e Páginas são acrescentados sem tocar
+nas demais (ADR 0011).
+
+**Home**:
+A Dimensão **Principal** é a Home da aplicação: destino de `/` e do login.
+Mostra atalhos e widgets contribuídos pelas demais Dimensões, sem conhecê-las
+por nome.
+
+**Núcleo**:
+Código compartilhado por todas as Dimensões: identidade (Usuário, Agente
+Público, Perfil, Vinculação à SGS), Instituição e Unidade, Auditoria, base das
+tabelas de apoio, registro de funcionalidades, layout e contratos. As Dimensões
+dependem do Núcleo, nunca umas das outras; comunicam-se por ID e por contratos.
+_Avoid_: core, base
+
+**Manifesto da Dimensão**:
+Arquivo `dimensao.php` na pasta da Dimensão: identidade, ordem, estado
+(`planejada` ou `ativa`), Módulos, Páginas, Subpáginas, Funcionalidades e
+permissões. O Núcleo descobre as pastas com manifesto e compõe o registro de
+funcionalidades.
+
+**Módulo** (navegação):
+Primeiro nível sob a Dimensão (ex.: Procedimentos, Protocolos, Providências,
+Interessados). Contém Páginas.
+_Avoid_: usar "módulo" para o painel de um Tipo (é o Painel do Tipo)
+
+**Página**, **Subpágina**, **Guia**, **Seção**:
+Níveis seguintes da navegação (Dimensão › Módulo › Página › Subpágina › Guia ›
+Seção). Página e Subpágina aparecem no menu lateral; Guia (aba) e Seção
+pertencem à própria tela.
+
+**Funcionalidade**:
+Ação que pode ser acrescentada em qualquer ponto da aplicação — numa Página ou
+em outro nível —, como gerar expediente ou reabrir um Procedimento. Não é nível
+de menu. Tem permissão e estado, como as Páginas.
+_Avoid_: módulo, recurso (é o link da Central de Recursos)
+
+**Registro de funcionalidades**:
+Fonte do menu e das ações. Cada item guarda sua posição, a permissão exigida e o
+estado: `planejada` (oculta para Usuário e Gestor, "em breve" para o
+Administrador) ou `ativa`. É o mecanismo da entrega gradativa. A autorização
+real é do servidor, nunca só do menu.
+
+**Protocolos**:
+Módulo jurídico com as Páginas Administrativos, Judiciais e Extrajudiciais —
+os Processos vistos por origem.
+
+**Processo Interno** / **Processo Externo**:
+Classificação por origem: o Administrativo é interno (Protocolo SIGADOC); o
+Judicial (Número CNJ) e o Extrajudicial (sem padrão de protocolo) são externos.
+
+**Lotação**:
+Unidade Administrativa em que o Agente Público exerce suas funções, da SES-MT,
+da PGE-MT ou de outra do Poder Executivo.
+_Avoid_: vinculação (é outro conceito)
+
+**Vinculação à SGS**:
+Atributo Sim/Não do Agente Público: integra a equipe da Subprocuradoria-Geral
+da Saúde, **independentemente da Lotação**. Registrada por Administrador ou
+Gestor; a mudança vai para a Auditoria. Define o **Agente Público SGS** e o
+acesso a Dado Sensível. Um Agente sem Vinculação pode ter Usuário e ser
+designado a Procedimentos.
+_Avoid_: vínculo (é a relação N:N entre processos e o vínculo funcional)
+
+**Dado Sensível**:
+Dado pessoal interno restrito a Usuários cujo Agente tem Vinculação = Sim,
+qualquer que seja o Perfil: Banco de Candidatos, Férias e Licenças, Usuários SUS
+(Pacientes). Não vai para a API de Integração nem para exportações.
+
+**Estado do Procedimento**:
+Um entre **Inativo**, **Ativo**, **Finalizado** e **Encerrado**. Inativo (sem
+Pendências) e Ativo (com Pendência) são calculados e nunca gravados à mão.
+Finalizado (objeto tratado ou atendido) e Encerrado (sem atendimento:
+arquivamento, perda de objeto) são escolhas do Usuário, só permitidas sem
+Pendências; são terminais.
+_Avoid_: status, situação, atividade
+
+**Pendência**:
+Tarefa não finalizada (Pendente ou Em andamento) ou Solicitação Aguardando.
+Anotações e Prioridades não são Pendências.
+
+**Reabrir**:
+Ação de Administrador ou Gestor que tira um Procedimento Finalizado ou
+Encerrado do estado terminal, voltando ao cálculo (Inativo ou Ativo). Auditada.
+Enquanto terminal, o Procedimento não aceita Tarefa nem Solicitação.
+
+**Processo sob responsabilidade da SGS**:
+Estado calculado do Processo Administrativo que tem ao menos um Procedimento
+Inativo ou Ativo. Não há campo de Unidade. Finalizado e Encerrado encerram a
+responsabilidade.
+
+**Prazo do Procedimento**:
+Data de vencimento do Procedimento. Padrão: data de autuação (abertura) do
+Processo + 30 dias, substituível à mão. Tarefas e Solicitações não o alteram;
+as de prazo posterior a ele são **sinalizadas** (cálculo, nunca gravado).
+
 ## Demanda de Saúde (planejado, não implementado)
 
 Especificação consolidada em 2026-10-20 (Nexus › Entrada › "SESJUR -
 Especificação - Demanda de Saúde (consolidada)"). Os termos abaixo ainda não
 existem no código.
 
-**Módulo** (Procedimento):
-Painel e campos próprios de um Procedimento, selecionados por uma chave estável
-(`procedimentos.modulo`, ex.: `DEMANDA_SAUDE`) e não pelo nome. Ver ADR 0005.
-_Avoid_: tipo de processo, template
+**Painel do Tipo** (antes "Módulo (Procedimento)"):
+Ver o termo na seção de Processos. Ver ADRs 0005 e 0010.
 
 **Demanda de Saúde**:
-Processo Administrativo cujo Procedimento tem o módulo `DEMANDA_SAUDE`: pedido
+Procedimento do Tipo *Demanda Jurídica de Produto de Saúde* (Painel
+`DEMANDA_SAUDE`): pedido
 de uma instituição externa (Judiciário, Ministério Público, Defensoria) para
 que a SES-MT forneça bens ou serviços de saúde a um Paciente. Não é entidade
 própria. Completa quando tem Paciente, Origem e ao menos um item. O status é

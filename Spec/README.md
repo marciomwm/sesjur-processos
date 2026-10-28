@@ -40,4 +40,5 @@ Este conjunto segue a metodologia **Spec-Driven Development** (GitHub Spec Kit):
 ## Pendências conhecidas da documentação
 
 - O `README.md` da raiz ainda descreve o sistema como "Gestão Jurídica" instalado em `gestao-juridica/` no XAMPP; o ambiente atual de referência é **Laragon** (ver [10-operacao](10-operacao/instalacao-e-transferencia.md)).
-- A constituição do Spec Kit (`.specify/memory/constitution.md`) ainda está com os marcadores do template e deve ser preenchida a partir de [principios.md](01-arquitetura/principios.md).
+- ~~A constituição do Spec Kit estava com os marcadores do template~~ — **preenchida em 2026-10-27** (`.specify/memory/constitution.md`, v1.0.0), a partir de [principios.md](01-arquitetura/principios.md).
+- Esta documentação descreve o **sistema legado**. A reestruturação está em [11-reestruturacao](11-reestruturacao/plano-de-especificacao.md); o `CONTEXT.md` e os ADRs 0006–0010 já usam o vocabulário do sistema-alvo (trechos marcados _Alvo_).

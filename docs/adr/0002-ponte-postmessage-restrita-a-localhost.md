@@ -1,5 +1,8 @@
 # Ponte aplicação↔extensão via postMessage restrito a localhost
 
+> **Status:** substituído em parte pelo ADR 0009 — a lista de hosts deixa de ser
+> só `localhost`/`127.0.0.1`. O mecanismo descrito abaixo continua valendo.
+
 Precisávamos de um canal programático entre a página PHP e a extensão MV3.
 Descartamos a área de transferência (depende de gesto do usuário, não carrega
 estrutura, não garante origem) e `externally_connectable` (exigiria fixar o ID
